@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Trustcoin.Core;
 
 namespace Trustcoin.Core
 {
-    public class Account : IAccount
+    public class Account : IAccount, IClient
     {
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
         private readonly INetwork _network;
@@ -13,14 +12,18 @@ namespace Trustcoin.Core
         {
             _network = network;
             Name = name;
+            RenewKeys();
         }
 
         public string Name { get; private set; }
+        public string PublicKey { get; private set; }
 
         public IPeer Self => Peer.GetSelf(this);
 
         public IPeer Connect(string name)
         {
+            if (name == Name)
+                throw new InvalidOperationException("Cannot connect with self");
             var newPeer = Peer.GetPeer(this, _network.FindAgent(name));
             _peers[name] = newPeer;
             UpdatePeers();
@@ -56,12 +59,21 @@ namespace Trustcoin.Core
         {
             if (!IsConnectedTo(sourceAgent.Name))
                 throw new InvalidOperationException("I am not connected to source");
-            if (!sourceSignature.Verify(sourceAgent.Name))
+            if (!sourceSignature.Verify(sourceAgent.Name, sourceAgent.PublicKey))
                 throw new InvalidOperationException("Source Signature is not valid");
             var peer = GetPeer(sourceAgent.Name);
-            peer.UpdateRelations(sourceAgent);
+            peer.Update(sourceAgent);
             return true;
         }
+
+        public void RenewKeys()
+        {
+            PublicKey = GenerateKey();
+            UpdatePeers();
+        }
+
+        private string GenerateKey()
+            => $"{DateTime.UtcNow.Ticks}";
 
         private void UpdatePeers()
         {

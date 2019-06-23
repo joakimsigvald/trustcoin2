@@ -1,6 +1,4 @@
-using Trustcoin.Core;
-
-namespace Core.Test
+namespace Trustcoin.Core.Test
 {
     public abstract class TestBase
     {

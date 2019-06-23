@@ -16,17 +16,17 @@ namespace Trustcoin.Core
 
         public bool Update(string targetName, string sourceName, ISignature sourceSignature)
         {
-            var targetAccount = GetAccount(targetName);
+            var targetClient = GetClient(targetName);
             var sourceAgent = FindAgent(sourceName);
             if (!sourceAgent.IsConnectedTo(targetName))
                 throw new InvalidOperationException("Source is not connected to target");
-            if (!sourceSignature.Verify(sourceName))
+            if (!sourceSignature.Verify(sourceName, sourceAgent.PublicKey))
                 throw new InvalidOperationException("Source Signature is not valid");
-            return targetAccount.IsConnectedTo(sourceName)
-                && targetAccount.Update(sourceAgent, sourceSignature);
+            return targetClient.IsConnectedTo(sourceName)
+                && targetClient.Update(sourceAgent, sourceSignature);
         }
 
-        private IAccount GetAccount(string name)
+        private IClient GetClient(string name)
             => _accounts[name];
     }
 }

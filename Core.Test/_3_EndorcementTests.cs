@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Core.Test
+namespace Trustcoin.Core.Test
 {
     public class EndorcementTests : TestBase
     {

@@ -1,6 +1,7 @@
+using System;
 using Xunit;
 
-namespace Core.Test
+namespace Trustcoin.Core.Test
 {
     public class ConnectionTests : TestBase
     {
@@ -47,6 +48,12 @@ namespace Core.Test
             OtherAccount.Endorce(MyAccountName);
 
             Assert.True(MyAccount.GetPeer(OtherAccountName).Endorces(MyAccountName));
+        }
+
+        [Fact]
+        public void WhenConnectWithSelf_ThrowsInvalidOperationException()
+        {
+            Assert.Throws<InvalidOperationException>(() => MyAccount.Connect(MyAccountName));
         }
     }
 }

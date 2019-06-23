@@ -11,19 +11,19 @@ namespace Trustcoin.Core
         private IAccount _subject;
         private float _trust;
 
-        private Peer(string name, IEnumerable<IAgent> relations)
-            : base(name, relations)
+        private Peer(string name, string publicKey, IEnumerable<IAgent> relations)
+            : base(name, publicKey, relations)
         {
         }
 
         public static IPeer GetSelf(IAccount target)
-            => new Peer(target.Name, target.Peers.Select(p =>  p.Clone()))
+            => new Peer(target.Name, target.PublicKey, target.Peers.Select(p =>  p.Clone()))
             {
                 Trust = 1
             };
 
         public static IPeer GetPeer(IAccount subject, IAgent target)
-            => new Peer(target.Name, target.Relations)
+            => new Peer(target.Name, target.PublicKey, target.Relations)
             {
                 Subject = subject,
                 Trust = BaseTrust

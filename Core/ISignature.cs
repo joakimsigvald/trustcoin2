@@ -2,6 +2,6 @@
 {
     public interface ISignature
     {
-        public bool Verify(string payload);
+        public bool Verify(string payload, string publicKey);
     }
 }

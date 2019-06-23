@@ -7,6 +7,6 @@
         float Trust { get; set; }
         float IncreaseTrust(float factor);
         float ReduceTrust(float factor);
-        void UpdateRelations(IAgent sourceAgent);
+        void Update(IAgent sourceAgent);
     }
 }

@@ -1,7 +1,7 @@
 using Trustcoin.Core;
 using Xunit;
 
-namespace Core.Test
+namespace Trustcoin.Core.Test
 {
     public class ArtefactTests : TestBase
     {
