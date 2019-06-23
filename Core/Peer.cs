@@ -2,38 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Trustcoin.Business
+namespace Trustcoin.Core
 {
-
-    public class Peer : IPeer
+    public class Peer : Agent, IPeer
     {
         public const float BaseTrust = 0.5f;
 
-        public bool IsEndorced { get; private set; }
-        private readonly IDictionary<string, IAgent> _relations = new Dictionary<string, IAgent>();
         private IAccount _subject;
         private float _trust;
 
-        private Peer(IEnumerable<IAgent> relations) {
-            _relations = relations.ToDictionary(r => r.Name);
+        private Peer(string name, IEnumerable<IAgent> relations)
+            : base(name, relations)
+        {
         }
 
         public static IPeer GetSelf(IAccount target)
-            => new Peer(target.Peers.Select(p => (IAgent)new Agent(p)))
+            => new Peer(target.Name, target.Peers.Select(p =>  p.Clone()))
             {
-                Name = target.Name,
                 Trust = 1
             };
 
         public static IPeer GetPeer(IAccount subject, IAgent target)
-            => new Peer(target.Relations)
+            => new Peer(target.Name, target.Relations)
             {
-                Name = target.Name,
                 Subject = subject,
                 Trust = BaseTrust
             };
-
-        public string Name { get; private set; }
 
         private IAccount Subject
         {
@@ -44,8 +38,6 @@ namespace Trustcoin.Business
                 _subject = value;
             }
         }
-
-        public ICollection<IAgent> Relations => _relations.Values;
 
         public float Trust
         {
@@ -67,23 +59,16 @@ namespace Trustcoin.Business
             Trust = (1 + Trust) * 0.5f;
         }
 
-        public bool Endorces(string name) => GetRelation(name)?.IsEndorced ?? false;
-
-        private IAgent GetRelation(string name)
-            => _relations.TryGetValue(name, out var peer) ? peer : null;
-
         public float IncreaseTrust(float factor)
-        {
-            if (factor < 0 || factor > 1)
-                throw new OutOfBounds();
-            return Trust += (1 - Trust) * factor; ;
-        }
+            => IsWeight(factor) 
+            ? Trust += (1 - Trust) * factor 
+            : throw new OutOfBounds();
 
         public float ReduceTrust(float factor)
-        {
-            if (factor < 0 || factor > 1)
-                throw new OutOfBounds();
-            return Trust *= 1 - factor;
-        }
+            => IsWeight(factor) 
+            ? Trust *= 1 - factor 
+            : throw new OutOfBounds();
+
+        private bool IsWeight(float value) => value >= 0 && value <= 1;
     }
 }

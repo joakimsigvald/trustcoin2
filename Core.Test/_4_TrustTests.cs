@@ -1,9 +1,9 @@
-using Trustcoin.Business;
+using Trustcoin.Core;
 using Xunit;
 
-namespace Business.Test
+namespace Core.Test
 {
-    public class TrustTests : NetworkTestBase
+    public class TrustTests : TestBase
     {
         [Fact]
         public void AfterConnectedAgent_TrustIs_BaseTrust()
@@ -15,7 +15,7 @@ namespace Business.Test
         [Fact]
         public void TrustOfSelf_Is_1()
         {
-            Assert.Equal(1, MyAccount.Me.Trust);
+            Assert.Equal(1, MyAccount.Self.Trust);
         }
 
         [Theory]

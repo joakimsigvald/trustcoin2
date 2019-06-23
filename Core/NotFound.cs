@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trustcoin.Business
+namespace Trustcoin.Core
 {
     public class NotFound<IEntity> : ArgumentException
     {

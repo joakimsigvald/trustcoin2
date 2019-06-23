@@ -1,15 +1,15 @@
 using Xunit;
 
-namespace Business.Test
+namespace Core.Test
 {
-    public class AgentTests : NetworkTestBase
+    public class AgentTests : TestBase
     {
         [Fact]
         public void CanFindAgentByName()
         {
-            var agent = _network.FindAgent(AccountName);
+            var agent = _network.FindAgent(MyAccountName);
             Assert.NotNull(agent);
-            Assert.Equal(AccountName, agent.Name);
+            Assert.Equal(MyAccountName, agent.Name);
         }
 
         [Fact]

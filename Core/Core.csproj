@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <AssemblyName>Trustcoin.Business</AssemblyName>
-    <RootNamespace>Trustcoin.Business</RootNamespace>
+    <AssemblyName>Trustcoin.Core</AssemblyName>
+    <RootNamespace>Trustcoin.Core</RootNamespace>
   </PropertyGroup>
 
 </Project>

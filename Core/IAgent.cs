@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 
-namespace Trustcoin.Business
+namespace Trustcoin.Core
 {
     public interface IAgent
     {
         string Name { get; }
         bool IsEndorced { get; }
         ICollection<IAgent> Relations { get; }
+        bool IsConnectedTo(string targetName);
+        IAgent Clone();
     }
 }

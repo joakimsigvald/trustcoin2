@@ -1,8 +1,8 @@
 using Xunit;
 
-namespace Business.Test
+namespace Core.Test
 {
-    public class EndorcementTests : NetworkTestBase
+    public class EndorcementTests : TestBase
     {
         [Fact]
         public void AfterEndorcedUnconnectedAgent_AgentIsPeer()
@@ -15,7 +15,7 @@ namespace Business.Test
         public void WhenEndorceAgent_PeerIsEndorced()
         {
             MyAccount.Endorce(OtherAccountName);
-            Assert.True(MyAccount.Me.Endorces(OtherAccountName));
+            Assert.True(MyAccount.Self.Endorces(OtherAccountName));
         }
 
         [Fact]
@@ -23,7 +23,7 @@ namespace Business.Test
         {
             MyAccount.Endorce(OtherAccountName);
             MyAccount.Endorce(OtherAccountName);
-            Assert.True(MyAccount.Me.Endorces(OtherAccountName));
+            Assert.True(MyAccount.Self.Endorces(OtherAccountName));
         }
     }
 }

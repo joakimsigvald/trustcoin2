@@ -1,16 +1,12 @@
-﻿using System.Collections.Generic;
-
-namespace Trustcoin.Business
+﻿namespace Trustcoin.Core
 {
-    public interface IPeer
+    public interface IPeer : IAgent
     {
-        string Name { get; }
-        bool IsEndorced { get; }
-        ICollection<IAgent> Relations { get; }
         void Endorce(IAccount account);
         bool Endorces(string name);
         float Trust { get; set; }
         float IncreaseTrust(float factor);
         float ReduceTrust(float factor);
+        void UpdateRelations(IAgent sourceAgent);
     }
 }

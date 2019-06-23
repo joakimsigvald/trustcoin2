@@ -1,16 +1,15 @@
-using System.Collections.Generic;
-using Trustcoin.Business;
+using Trustcoin.Core;
 using Xunit;
 
-namespace Business.Test
+namespace Core.Test
 {
-    public class PeerTests : NetworkTestBase
+    public class PeerTests : TestBase
     {
         [Fact]
         public void Account_Me_IsITsOwnPeer()
         {
-            Assert.IsAssignableFrom<IPeer>(MyAccount.Me);
-            Assert.Equal(MyAccount.Name, MyAccount.Me.Name);
+            Assert.IsAssignableFrom<IPeer>(MyAccount.Self);
+            Assert.Equal(MyAccount.Name, MyAccount.Self.Name);
         }
 
         [Fact]
