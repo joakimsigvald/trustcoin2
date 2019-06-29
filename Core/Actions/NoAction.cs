@@ -1,8 +1,16 @@
-﻿namespace Trustcoin.Core.Actions
+﻿using System;
+using System.Runtime.Serialization;
+
+namespace Trustcoin.Core.Actions
 {
-    public class NoAction : BaseAction
+    [Serializable]
+    public class NoAction : ActionBase
     {
-        public NoAction(ISignature signature) : base(signature)
+        public NoAction()
+        {
+        }
+
+        protected NoAction(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

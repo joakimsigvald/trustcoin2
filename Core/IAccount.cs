@@ -7,7 +7,7 @@ namespace Trustcoin.Core
         ICollection<IPeer> Peers { get; }
         string Name { get; }
         IPeer Self { get; }
-        string PublicKey { get; }
+        byte[] PublicKey { get; }
 
         IPeer Connect(string name);
         bool IsConnectedTo(string name);

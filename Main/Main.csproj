@@ -7,4 +7,8 @@
     <RootNamespace>Truscoin.Main</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj" />
+  </ItemGroup>
+
 </Project>

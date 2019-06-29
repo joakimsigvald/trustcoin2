@@ -8,7 +8,7 @@ namespace Trustcoin.Core
     {
         public static readonly Weight BaseTrust = 0.5f;
 
-        private Peer(string name, string publicKey, IEnumerable<Relation> relations)
+        private Peer(string name, byte[] publicKey, IEnumerable<Relation> relations)
             : base(name, publicKey, relations)
         {
         }

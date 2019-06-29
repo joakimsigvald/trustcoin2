@@ -1,8 +1,24 @@
-﻿namespace Trustcoin.Core.Actions
+﻿using System;
+using System.Runtime.Serialization;
+
+namespace Trustcoin.Core.Actions
 {
-    public class ConnectAction : BaseAction
+    [Serializable]
+    public class ConnectAction : ActionBase
     {
-        public ConnectAction(ISignature signature, string agentName) : base(signature)
+        protected ConnectAction(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            AgentName = (string)info.GetValue(nameof(AgentName), typeof(string));
+        }
+
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue(nameof(AgentName), AgentName);
+        }
+
+        public ConnectAction(string agentName)
         {
             AgentName = agentName;
         }

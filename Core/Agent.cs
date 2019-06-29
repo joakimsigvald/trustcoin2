@@ -8,7 +8,7 @@ namespace Trustcoin.Core
         public bool IsEndorced { get; set; }
         private readonly IDictionary<string, Relation> _relations = new Dictionary<string, Relation>();
 
-        protected Agent(string name, string publicKey, IEnumerable<Relation> relations)
+        protected Agent(string name, byte[] publicKey, IEnumerable<Relation> relations)
         {
             Name = name;
             PublicKey = publicKey;
@@ -30,7 +30,7 @@ namespace Trustcoin.Core
         public bool IsConnectedTo(string name) => _relations.ContainsKey(name);
 
         public string Name { get; private set; }
-        public string PublicKey { get; set; }
+        public byte[] PublicKey { get; set; }
 
         public bool Endorces(string name) => GetRelation(name).Agent?.IsEndorced ?? false;
 

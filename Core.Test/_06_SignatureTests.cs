@@ -1,9 +1,15 @@
+using System.Security.Cryptography;
+using Trustcoin.Core.Cryptography;
 using Xunit;
 
 namespace Trustcoin.Core.Test
 {
     public class SignatureTests : TestBase
     {
+        private static readonly RsaCryptographyFactory _cryptographyFactory = new RsaCryptographyFactory();
+
+        public SignatureTests() : base(_cryptographyFactory) { }
+
         [Fact]
         public void CreatedAccountHasPublicKey()
         {
@@ -25,31 +31,33 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void CanCreateValidSignature()
         {
-            var payload = "xyz";
-            var key = "abc";
-            var signature = new SimpleSignature(payload, key);
+            var payload = new byte[] { 1, 2, 3};
+            var key = RSA.Create();
+            var signature = new RsaSignature(payload, key);
 
-            Assert.True(signature.Verify(payload, key));
+            Assert.True(signature.Verify(payload, key.ExportRSAPublicKey()));
         }
 
         [Fact]
         public void CannotVerifySignatureWithWrongPayload()
         {
-            var payload = "xyz";
-            var key = "abc";
-            var signature = new SimpleSignature(payload, key);
+            var payload1 = new byte[] { 1, 2, 3 };
+            var payload2 = new byte[] { 2, 3, 4 };
+            var key = RSA.Create();
+            var signature = new RsaSignature(payload1, key);
 
-            Assert.False(signature.Verify("zzz", key));
+            Assert.False(signature.Verify(payload2, key.ExportRSAPublicKey()));
         }
 
         [Fact]
         public void CannotVerifySignatureWithWrongKey()
         {
-            var payload = "xyz";
-            var key = "abc";
-            var signature = new SimpleSignature(payload, key);
+            var payload = new byte[] { 1, 2, 3 };
+            var key = RSA.Create();
+            var otherKey = RSA.Create();
+            var signature = new RsaSignature(payload, key);
 
-            Assert.False(signature.Verify(payload, "zzz"));
+            Assert.False(signature.Verify(payload, otherKey.ExportRSAPublicKey()));
         }
 
         [Fact]

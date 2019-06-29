@@ -1,14 +1,32 @@
-﻿namespace Trustcoin.Core.Actions
+﻿using System;
+using System.Runtime.Serialization;
+
+namespace Trustcoin.Core.Actions
 {
-    public class RenewKeyAction : BaseAction
+    [Serializable]
+    public class RenewKeyAction : ActionBase
     {
-        public RenewKeyAction(ISignature signature, string oldKey, string newKey) : base(signature)
+        public RenewKeyAction(byte[] oldKey, byte[] newKey)
         {
             OldKey = oldKey;
             NewKey = newKey;
         }
 
-        public string OldKey { get; }
-        public string NewKey { get; }
+        public byte[] OldKey { get; }
+        public byte[] NewKey { get; }
+
+        protected RenewKeyAction(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            OldKey = (byte[])info.GetValue(nameof(OldKey), typeof(byte[]));
+            NewKey = (byte[])info.GetValue(nameof(NewKey), typeof(byte[]));
+        }
+
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue(nameof(OldKey), OldKey);
+            info.AddValue(nameof(NewKey), NewKey);
+        }
     }
 }

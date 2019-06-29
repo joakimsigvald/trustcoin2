@@ -6,6 +6,6 @@ namespace Trustcoin.Core
     {
         IAccount CreateAccount(string name);
         IAgent FindAgent(string name);
-        bool SendAction(string targetName, string sourceName, IAction action);
+        bool SendAction(string targetName, string sourceName, ISignedAction action);
     }
 }

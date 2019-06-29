@@ -1,11 +1,17 @@
 using System;
 using Trustcoin.Core.Actions;
+using Trustcoin.Core.Cryptography;
 using Xunit;
 
 namespace Trustcoin.Core.Test
 {
     public class NetworkTests : TestBase
     {
+        private static readonly RsaCryptographyFactory _cryptographyFactory = new RsaCryptographyFactory();
+        public readonly ICryptography _cryptography = _cryptographyFactory.CreateCryptography();
+
+        public NetworkTests() : base(_cryptographyFactory) { }
+
         [Fact]
         public void CanFindAgentByName()
         {
@@ -33,16 +39,15 @@ namespace Trustcoin.Core.Test
         public void WhenUpdatedWithInvalidSignature_ThrowsInvalidOperationException()
         {
             MyAccount.Connect(OtherAccountName);
-            var invalidSignature = new FakeSignature("XXX");
             var otherAgent = _network.FindAgent(OtherAccountName);
-            Assert.Throws<InvalidOperationException>(() => _network.SendAction(MyAccountName, OtherAccountName, new NoAction(invalidSignature)));
+            Assert.Throws<InvalidOperationException>(
+                () => _network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
         }
 
         [Fact]
         public void WhenUpdatedWithUnconnectedAgent_ReturnsFalse()
         {
-            var signature = new FakeSignature(OtherAccountName);
-            Assert.False(_network.SendAction(MyAccountName, OtherAccountName, new NoAction(signature)));
+            Assert.False(_network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
         }
     }
 }

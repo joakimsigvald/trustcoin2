@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Trustcoin.Core.Actions;
+using Trustcoin.Core.Cryptography;
 
 namespace Trustcoin.Core
 {
@@ -8,16 +9,17 @@ namespace Trustcoin.Core
     {
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
         private readonly INetwork _network;
+        private readonly ICryptography _cryptography;
 
-        public Account(INetwork network, string name)
+        public Account(INetwork network, ICryptography cryptography, string name)
         {
             _network = network;
+            _cryptography = cryptography;
             Name = name;
-            RenewKeys();
         }
 
         public string Name { get; private set; }
-        public string PublicKey { get; private set; }
+        public byte[] PublicKey => _cryptography.PublicKey;
 
         public IPeer Self => Peer.GetSelf(this);
 
@@ -58,14 +60,13 @@ namespace Trustcoin.Core
 
         public override string ToString() => Name;
 
-        public bool Update(string sourceAgentName, IAction action)
+        public bool Update(string sourceAgentName, ISignedAction signedAction)
         {
             if (!IsConnectedTo(sourceAgentName))
                 return false;
             var peer = GetPeer(sourceAgentName);
-            if (!action.SourceSignature.Verify(sourceAgentName, peer.PublicKey))
-                throw new InvalidOperationException("Source Signature is not valid");
-            UpdatePeer(peer, action);
+            _cryptography.VerifySignature(signedAction, peer);
+            UpdatePeer(peer, signedAction.Action);
             return true;
         }
 
@@ -115,35 +116,30 @@ namespace Trustcoin.Core
         public void RenewKeys()
         {
             var oldKey = PublicKey;
-            PublicKey = GenerateKey();
+            _cryptography.RenewKeys();
             OnRenewedKey(oldKey, PublicKey);
         }
 
-        private string GenerateKey()
-            => $"{DateTime.UtcNow.Ticks}";
-
         private void OnAddedConnection(string agentName)
         {
-            SendAction(new ConnectAction(Sign(Name), agentName));
+            SendAction(new ConnectAction(agentName));
         }
 
-        private void OnRenewedKey(string oldKey, string newKey)
+        private void OnRenewedKey(byte[] oldKey, byte[] newKey)
         {
-            SendAction(new RenewKeyAction(Sign(Name), oldKey, newKey));
+            SendAction(new RenewKeyAction(oldKey, newKey));
         }
 
         private void OnEndorcedAgent(string agentName)
         {
-            SendAction(new EndorceAction(Sign(Name), agentName));
+            SendAction(new EndorceAction(agentName));
         }
 
         private void SendAction(IAction action)
         {
+            var signedAction = _cryptography.Sign(action);
             foreach (var peer in Peers)
-                _network.SendAction(peer.Name, Name, action);
+                _network.SendAction(peer.Name, Name, signedAction);
         }
-
-        private ISignature Sign(string name)
-            => new FakeSignature(name);
     }
 }

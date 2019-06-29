@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using Trustcoin.Core.Cryptography;
 
 namespace Trustcoin.Core.Test
 {
     public abstract class TestBase
     {
-        protected readonly INetwork _network = new Network();
+        protected readonly INetwork _network;
         protected readonly IAccount MyAccount;
         protected readonly IAccount OtherAccount;
         protected readonly IAccount ThirdAccount;
@@ -13,8 +14,9 @@ namespace Trustcoin.Core.Test
         protected const string OtherAccountName = "OtherAccount";
         protected const string ThirdAccountName = "ThirdAccount";
 
-        protected TestBase()
+        protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {
+            _network = new Network(cryptographyFactory ?? new SimpleCryptographyFactory());
             MyAccount = _network.CreateAccount(MyAccountName);
             OtherAccount = _network.CreateAccount(OtherAccountName);
             ThirdAccount = _network.CreateAccount(ThirdAccountName);

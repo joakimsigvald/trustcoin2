@@ -1,7 +1,9 @@
-﻿namespace Trustcoin.Core.Actions
+﻿using System.Runtime.Serialization;
+
+namespace Trustcoin.Core.Actions
 {
-    public interface IAction
+    public interface IAction : ISerializable
     {
-        ISignature SourceSignature { get; }
+        byte[] Serialize();
     }
 }
