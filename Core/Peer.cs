@@ -1,74 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using static Trustcoin.Core.Constants;
 
 namespace Trustcoin.Core
 {
     public class Peer : Agent, IPeer
     {
-        public const float BaseTrust = 0.5f;
+        public static readonly Weight BaseTrust = 0.5f;
 
-        private IAccount _subject;
-        private float _trust;
-
-        private Peer(string name, string publicKey, IEnumerable<IAgent> relations)
+        private Peer(string name, string publicKey, IEnumerable<Relation> relations)
             : base(name, publicKey, relations)
         {
         }
 
         public static IPeer GetSelf(IAccount target)
-            => new Peer(target.Name, target.PublicKey, target.Peers.Select(p =>  p.Clone()))
+            => new Peer(target.Name, target.PublicKey, target.Peers.Select(p => p.AsRelation()))
             {
-                Trust = 1
+                Trust = Weight.Max
             };
 
-        public static IPeer GetPeer(IAccount subject, IAgent target)
+        public static IPeer MakePeer(IAgent target)
             => new Peer(target.Name, target.PublicKey, target.Relations)
             {
-                Subject = subject,
-                Trust = BaseTrust
+                Trust = BaseTrust,
+                RelationWeight = Relation.BaseWeight
             };
 
-        private IAccount Subject
-        {
-            set
-            {
-                if (_subject != null)
-                    throw new InvalidOperationException("Cannot connect subject to peer twice");
-                _subject = value;
-            }
-        }
+        public Weight Trust { get; set; }
+        public Weight RelationWeight { get; set; }
 
-        public float Trust
+        public void Endorce()
         {
-            get => _trust;
-            set
-            {
-                if (value < 0 || value > 1)
-                    throw new OutOfBounds();
-                _trust = value;
-            }
-        }
-
-        public void Endorce(IAccount account)
-        {
-            if (account != _subject)
-                throw new ArgumentException("Only subject can endorce peer");
             if (IsEndorced) return;
             IsEndorced = true;
-            Trust = (1 + Trust) * 0.5f;
+            Trust = Trust.Increase(EndorcementFactor);
         }
-
-        public float IncreaseTrust(float factor)
-            => IsWeight(factor) 
-            ? Trust += (1 - Trust) * factor 
-            : throw new OutOfBounds();
-
-        public float ReduceTrust(float factor)
-            => IsWeight(factor) 
-            ? Trust *= 1 - factor 
-            : throw new OutOfBounds();
-
-        private bool IsWeight(float value) => value >= 0 && value <= 1;
     }
 }

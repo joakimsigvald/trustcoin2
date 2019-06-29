@@ -1,4 +1,3 @@
-using Trustcoin.Core;
 using Xunit;
 
 namespace Trustcoin.Core.Test
@@ -15,7 +14,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void TrustOfSelf_Is_1()
         {
-            Assert.Equal(1, MyAccount.Self.Trust);
+            Assert.Equal(Weight.Max, MyAccount.Self.Trust);
         }
 
         [Theory]
@@ -24,7 +23,7 @@ namespace Trustcoin.Core.Test
         public void CanSetTrustOfPeer(float trust)
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Equal(trust, MyAccount.SetTrust(OtherAccountName, trust));
+            Assert.Equal((Weight)trust, MyAccount.SetTrust(OtherAccountName, trust));
         }
 
         [Theory]
@@ -33,7 +32,7 @@ namespace Trustcoin.Core.Test
         public void WhenSetTrustOutOfBounds_ThrowsOutOfBoundsException(float trust)
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Throws<OutOfBounds>(() => MyAccount.SetTrust(OtherAccountName, trust));
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, trust));
         }
 
         [Theory]
@@ -48,7 +47,7 @@ namespace Trustcoin.Core.Test
             MyAccount.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, trustBefore);
             MyAccount.IncreaseTrust(OtherAccountName, factor);
-            Assert.Equal(trustAfter, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal((Weight)trustAfter, MyAccount.GetTrust(OtherAccountName));
         }
 
         [Theory]
@@ -77,7 +76,7 @@ namespace Trustcoin.Core.Test
         {
             MyAccount.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, trustBefore);
-            Assert.Throws<OutOfBounds>(() => MyAccount.IncreaseTrust(OtherAccountName, factor));
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherAccountName, factor));
         }
 
         [Theory]
@@ -90,7 +89,7 @@ namespace Trustcoin.Core.Test
         {
             MyAccount.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, trustBefore);
-            Assert.Throws<OutOfBounds>(() => MyAccount.ReduceTrust(OtherAccountName, factor));
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.ReduceTrust(OtherAccountName, factor));
         }
 
         [Theory]
@@ -118,7 +117,7 @@ namespace Trustcoin.Core.Test
             MyAccount.Endorce(OtherAccountName);
             MyAccount.GetPeer(OtherAccountName).Trust = trustBefore;
             MyAccount.Endorce(OtherAccountName);
-            Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal((Weight)trustBefore, MyAccount.GetTrust(OtherAccountName));
         }
     }
 }

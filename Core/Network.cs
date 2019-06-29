@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Trustcoin.Core.Actions;
 
 namespace Trustcoin.Core
 {
@@ -14,16 +15,10 @@ namespace Trustcoin.Core
         public IAgent FindAgent(string name)
             => _accounts.TryGetValue(name, out var account) ? new Agent(account) : null;
 
-        public bool Update(string targetName, string sourceName, ISignature sourceSignature)
+        public bool SendAction(string targetName, string sourceName, IAction action)
         {
             var targetClient = GetClient(targetName);
-            var sourceAgent = FindAgent(sourceName);
-            if (!sourceAgent.IsConnectedTo(targetName))
-                throw new InvalidOperationException("Source is not connected to target");
-            if (!sourceSignature.Verify(sourceName, sourceAgent.PublicKey))
-                throw new InvalidOperationException("Source Signature is not valid");
-            return targetClient.IsConnectedTo(sourceName)
-                && targetClient.Update(sourceAgent, sourceSignature);
+            return targetClient.Update(sourceName, action);
         }
 
         private IClient GetClient(string name)

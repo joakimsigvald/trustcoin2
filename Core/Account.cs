@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Trustcoin.Core.Actions;
 
 namespace Trustcoin.Core
 {
@@ -24,9 +25,9 @@ namespace Trustcoin.Core
         {
             if (name == Name)
                 throw new InvalidOperationException("Cannot connect with self");
-            var newPeer = Peer.GetPeer(this, _network.FindAgent(name));
+            var newPeer = Peer.MakePeer(_network.FindAgent(name));
             _peers[name] = newPeer;
-            UpdatePeers();
+            OnAddedConnection(name);
             return newPeer;
         }
 
@@ -37,8 +38,8 @@ namespace Trustcoin.Core
 
         public void Endorce(string name)
         {
-            (IsConnectedTo(name) ? GetPeer(name) : Connect(name)).Endorce(this);
-            UpdatePeers();
+            (IsConnectedTo(name) ? GetPeer(name) : Connect(name)).Endorce();
+            OnEndorcedAgent(name);
         }
 
         public IPeer GetPeer(string name)
@@ -46,39 +47,100 @@ namespace Trustcoin.Core
             ? peer
             : throw new NotFound<Peer>(name);
 
-        public float GetTrust(string name)
+        public Weight GetTrust(string name)
             => GetPeer(name).Trust;
 
-        public float SetTrust(string name, float trust) => GetPeer(name).Trust = trust;
+        public Weight SetTrust(string name, Weight trust) => GetPeer(name).Trust = trust;
 
-        public float IncreaseTrust(string name, float factor) => GetPeer(name).IncreaseTrust(factor);
+        public Weight IncreaseTrust(string name, Weight factor) => GetPeer(name).IncreaseTrust(factor);
 
-        public float ReduceTrust(string name, float factor) => GetPeer(name).ReduceTrust(factor);
+        public Weight ReduceTrust(string name, Weight factor) => GetPeer(name).ReduceTrust(factor);
 
-        public bool Update(IAgent sourceAgent, ISignature sourceSignature)
+        public override string ToString() => Name;
+
+        public bool Update(string sourceAgentName, IAction action)
         {
-            if (!IsConnectedTo(sourceAgent.Name))
-                throw new InvalidOperationException("I am not connected to source");
-            if (!sourceSignature.Verify(sourceAgent.Name, sourceAgent.PublicKey))
+            if (!IsConnectedTo(sourceAgentName))
+                return false;
+            var peer = GetPeer(sourceAgentName);
+            if (!action.SourceSignature.Verify(sourceAgentName, peer.PublicKey))
                 throw new InvalidOperationException("Source Signature is not valid");
-            var peer = GetPeer(sourceAgent.Name);
-            peer.Update(sourceAgent);
+            UpdatePeer(peer, action);
             return true;
+        }
+
+        private void UpdatePeer(IPeer peer, IAction action) {
+            switch (action) {
+                case ConnectAction ca:
+                    WhenConnect(peer, ca);
+                    break;
+                case EndorceAction ea:
+                    WhenEndorce(peer, ea);
+                    break;
+                case RenewKeyAction ra:
+                    WhenRenewKey(peer, ra);
+                    break;
+                case NoAction _:
+                    break;
+                default: throw new NotImplementedException("Action not implemented: " + action);
+            }
+        }
+
+        private void WhenRenewKey(IPeer peer, RenewKeyAction ra)
+        {
+            if (peer.PublicKey == ra.NewKey)
+                return;
+            if (peer.PublicKey != ra.OldKey)
+                throw new InvalidOperationException($"Invalid old key: {ra.OldKey}, expected: {peer.PublicKey}");
+            peer.PublicKey = ra.NewKey;
+        }
+
+        private void WhenEndorce(IPeer peer, EndorceAction ea)
+        {
+            if (peer.Endorces(ea.AgentName))
+                return;
+            var relation = peer.GetRelation(ea.AgentName);
+            if (!relation.IsConnected)
+                relation = peer.AddRelation(_network.FindAgent(ea.AgentName));
+            relation.IsEndorced = true;
+        }
+
+        private void WhenConnect(IPeer peer, ConnectAction action)
+        {
+            if (peer.IsConnectedTo(action.AgentName))
+                return;
+            peer.AddRelation(_network.FindAgent(action.AgentName));
         }
 
         public void RenewKeys()
         {
+            var oldKey = PublicKey;
             PublicKey = GenerateKey();
-            UpdatePeers();
+            OnRenewedKey(oldKey, PublicKey);
         }
 
         private string GenerateKey()
             => $"{DateTime.UtcNow.Ticks}";
 
-        private void UpdatePeers()
+        private void OnAddedConnection(string agentName)
+        {
+            SendAction(new ConnectAction(Sign(Name), agentName));
+        }
+
+        private void OnRenewedKey(string oldKey, string newKey)
+        {
+            SendAction(new RenewKeyAction(Sign(Name), oldKey, newKey));
+        }
+
+        private void OnEndorcedAgent(string agentName)
+        {
+            SendAction(new EndorceAction(Sign(Name), agentName));
+        }
+
+        private void SendAction(IAction action)
         {
             foreach (var peer in Peers)
-                _network.Update(peer.Name, Name, Sign(Name));
+                _network.SendAction(peer.Name, Name, action);
         }
 
         private ISignature Sign(string name)

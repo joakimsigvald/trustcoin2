@@ -1,5 +1,5 @@
 using System;
-using Trustcoin.Core;
+using Trustcoin.Core.Actions;
 using Xunit;
 
 namespace Trustcoin.Core.Test
@@ -35,16 +35,14 @@ namespace Trustcoin.Core.Test
             MyAccount.Connect(OtherAccountName);
             var invalidSignature = new FakeSignature("XXX");
             var otherAgent = _network.FindAgent(OtherAccountName);
-            Assert.Throws<InvalidOperationException>(() => _network.Update(MyAccountName, OtherAccountName, invalidSignature));
+            Assert.Throws<InvalidOperationException>(() => _network.SendAction(MyAccountName, OtherAccountName, new NoAction(invalidSignature)));
         }
 
         [Fact]
-        public void WhenUpdatedWithUnconnectedAgent_ThrowsInvalidOperationException()
+        public void WhenUpdatedWithUnconnectedAgent_ReturnsFalse()
         {
-            var invalidSignature = new FakeSignature("XXX");
-            var otherAgent = _network.FindAgent(OtherAccountName);
             var signature = new FakeSignature(OtherAccountName);
-            Assert.Throws<InvalidOperationException>(() => _network.Update(MyAccountName, OtherAccountName, signature));
+            Assert.False(_network.SendAction(MyAccountName, OtherAccountName, new NoAction(signature)));
         }
     }
 }

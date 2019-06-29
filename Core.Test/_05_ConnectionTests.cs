@@ -20,7 +20,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterConnectWithPeer_UpdateIsSentToPeers()
+        public void AfterMyPeerConnectWithMe_IAmUpdatedOfPeerConnection()
         {
             MyAccount.Connect(OtherAccountName);
             Assert.False(MyAccount.GetPeer(OtherAccountName).IsConnectedTo(MyAccountName));
@@ -29,7 +29,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterConnectWithAgent_UpdateIsSentToPeers()
+        public void AfterMyPeerConnectWithOtherAgent_IAmUpdateOfPeerConnection()
         {
             MyAccount.Connect(OtherAccountName);
             OtherAccount.Connect(MyAccountName);
@@ -40,7 +40,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterEndorcedPeer_UpdateIsSentToPeers()
+        public void AfterPeerEndorceMe_IAmUpdatedOfEndorcement()
         {
             MyAccount.Connect(OtherAccountName);
             OtherAccount.Connect(MyAccountName);

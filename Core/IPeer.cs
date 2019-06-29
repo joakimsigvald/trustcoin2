@@ -2,11 +2,11 @@
 {
     public interface IPeer : IAgent
     {
-        void Endorce(IAccount account);
+        void Endorce();
         bool Endorces(string name);
-        float Trust { get; set; }
-        float IncreaseTrust(float factor);
-        float ReduceTrust(float factor);
-        void Update(IAgent sourceAgent);
+        Weight Trust { get; set; }
+        Relation AsRelation() => new Relation(Clone());
+        Weight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);
+        Weight ReduceTrust(Weight factor) => Trust = Trust.Reduce(factor);
     }
 }
