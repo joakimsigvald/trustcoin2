@@ -5,7 +5,7 @@ namespace Trustcoin.Core.Entities
 {
     public interface IAccount
     {
-        ICollection<IPeer> Peers { get; }
+        IEnumerable<IPeer> Peers { get; }
         string Name { get; }
         IPeer Self { get; }
         byte[] PublicKey { get; }

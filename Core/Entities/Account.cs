@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Exceptions;
@@ -19,27 +20,35 @@ namespace Trustcoin.Core.Entities
             _network = network;
             _cryptography = cryptography;
             Name = name;
+            Self = CreateSelf();
         }
+
+        private IPeer CreateSelf()
+            => new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
+            {
+                Trust = Weight.Max,
+                IsEndorced = true
+            };
 
         public string Name { get; private set; }
         public byte[] PublicKey => _cryptography.PublicKey;
 
-        public IPeer Self => Peer.GetSelf(this);
+        public IPeer Self { get; }
 
         public IPeer Connect(string name)
         {
             if (name == Name)
                 throw new InvalidOperationException("Cannot connect with self");
-            var newPeer = Peer.MakePeer(_network.FindAgent(name));
+            var newPeer = _network.FindAgent(name).AsPeer();
             _peers[name] = newPeer;
             OnAddedConnection(name);
             return newPeer;
         }
 
         public bool IsConnectedTo(string name)
-            => _peers.ContainsKey(name);
+            => name == Name || _peers.ContainsKey(name);
 
-        public ICollection<IPeer> Peers => _peers.Values;
+        public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
 
         public void Endorce(string name)
         {
@@ -48,8 +57,8 @@ namespace Trustcoin.Core.Entities
         }
 
         public IPeer GetPeer(string name)
-            => _peers.TryGetValue(name, out var peer)
-            ? peer
+            => name == Name ? Self 
+            : _peers.TryGetValue(name, out var peer) ? peer
             : throw new NotFound<Peer>(name);
 
         public Weight GetTrust(string name) => GetPeer(name).Trust;
@@ -72,6 +81,13 @@ namespace Trustcoin.Core.Entities
             var subject = GetPeer(subjectName);
             var relation = subject.GetRelation(objectName);
             return relation.Weight;
+        }
+
+        public void RenewKeys()
+        {
+            var oldKey = PublicKey;
+            _cryptography.RenewKeys();
+            OnRenewedKey(oldKey, PublicKey);
         }
 
         public override string ToString() => Name;
@@ -139,13 +155,6 @@ namespace Trustcoin.Core.Entities
             if (peer.IsConnectedTo(action.AgentName))
                 return;
             peer.AddRelation(_network.FindAgent(action.AgentName));
-        }
-
-        public void RenewKeys()
-        {
-            var oldKey = PublicKey;
-            _cryptography.RenewKeys();
-            OnRenewedKey(oldKey, PublicKey);
         }
 
         private void OnAddedConnection(string agentName)

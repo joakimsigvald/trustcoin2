@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using static Trustcoin.Core.Entities.Constants;
 
 namespace Trustcoin.Core.Entities
 {
@@ -20,6 +21,13 @@ namespace Trustcoin.Core.Entities
         {
         }
 
+
+        public IPeer AsPeer()
+            => new Peer(Name, PublicKey, Relations)
+            {
+                Trust = BaseTrust,
+            };
+
         public IAgent Clone()
             => new Agent(Name, PublicKey, Relations)
             {
@@ -32,7 +40,7 @@ namespace Trustcoin.Core.Entities
         public string Name { get; private set; }
         public byte[] PublicKey { get; set; }
 
-        public bool Endorces(string name) => GetRelation(name).Agent?.IsEndorced ?? false;
+        public bool Endorces(string name) => GetRelation(name)?.Agent.IsEndorced ?? false;
 
         public Relation AddRelation(IAgent agent)
             => _relations[agent.Name] = new Relation(agent);

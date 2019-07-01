@@ -12,5 +12,6 @@ namespace Trustcoin.Core.Entities
         IAgent Clone();
         Relation GetRelation(string agentName);
         Relation AddRelation(IAgent agent);
+        IPeer AsPeer();
     }
 }
