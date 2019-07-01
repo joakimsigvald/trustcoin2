@@ -14,9 +14,12 @@ namespace Trustcoin.Core
         IPeer GetPeer(string name);
         void Endorce(string name);
         Weight GetTrust(string name);
-        Weight SetTrust(string name, Weight trust);
+        Weight SetTrust(string name, Weight value);
         Weight IncreaseTrust(string name, Weight factor);
         Weight ReduceTrust(string name, Weight factor);
         void RenewKeys();
+        void SetRelationWeight(string subjectName, string objectName, Weight value);
+        Money GetMoney(string name);
+        void SetMoney(string name, Money money);
     }
 }

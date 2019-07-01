@@ -10,9 +10,11 @@ namespace Trustcoin.Core.Test
         protected readonly IAccount MyAccount;
         protected readonly IAccount OtherAccount;
         protected readonly IAccount ThirdAccount;
+        protected readonly IAccount FourthAccount;
         protected const string MyAccountName = "MyAccount";
         protected const string OtherAccountName = "OtherAccount";
         protected const string ThirdAccountName = "ThirdAccount";
+        protected const string FourthAccountName = "FourthAccount";
 
         protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {

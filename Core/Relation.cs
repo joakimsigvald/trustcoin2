@@ -4,9 +4,7 @@ namespace Trustcoin.Core
 {
     public class Relation
     {
-        public static readonly Weight BaseWeight = 0.1f;
-
-        public Relation(IAgent agent) : this(agent, BaseWeight)
+        public Relation(IAgent agent) : this(agent, BaseRelationWeight)
         {
         }
 

@@ -1,4 +1,6 @@
+using System;
 using System.Security.Cryptography;
+using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Xunit;
 
@@ -7,6 +9,7 @@ namespace Trustcoin.Core.Test
     public class SignatureTests : TestBase
     {
         private static readonly RsaCryptographyFactory _cryptographyFactory = new RsaCryptographyFactory();
+        public readonly ICryptography _cryptography = _cryptographyFactory.CreateCryptography();
 
         public SignatureTests() : base(_cryptographyFactory) { }
 
@@ -77,6 +80,21 @@ namespace Trustcoin.Core.Test
 
             MyAccount.RenewKeys();
             Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyAccountName).PublicKey);
+        }
+
+        [Fact]
+        public void WhenUpdatedWithInvalidSignature_ThrowsInvalidOperationException()
+        {
+            MyAccount.Connect(OtherAccountName);
+            var otherAgent = _network.FindAgent(OtherAccountName);
+            Assert.Throws<InvalidOperationException>(
+                () => _network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
+        }
+
+        [Fact]
+        public void WhenUpdatedWithUnconnectedAgent_ReturnsFalse()
+        {
+            Assert.False(_network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
         }
     }
 }

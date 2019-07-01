@@ -6,8 +6,6 @@ namespace Trustcoin.Core
 {
     public class Peer : Agent, IPeer
     {
-        public static readonly Weight BaseTrust = 0.5f;
-
         private Peer(string name, byte[] publicKey, IEnumerable<Relation> relations)
             : base(name, publicKey, relations)
         {
@@ -23,10 +21,11 @@ namespace Trustcoin.Core
             => new Peer(target.Name, target.PublicKey, target.Relations)
             {
                 Trust = BaseTrust,
-                RelationWeight = Relation.BaseWeight
+                RelationWeight = BaseRelationWeight
             };
 
         public Weight Trust { get; set; }
+        public Money Money { get; set; }
         public Weight RelationWeight { get; set; }
 
         public void Endorce()

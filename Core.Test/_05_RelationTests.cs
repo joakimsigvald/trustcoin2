@@ -1,4 +1,5 @@
 using Xunit;
+using static Trustcoin.Core.Constants;
 
 namespace Trustcoin.Core.Test
 {
@@ -17,10 +18,10 @@ namespace Trustcoin.Core.Test
             var thirdToOther = MyAccount.GetPeer(ThirdAccountName)
                 .GetRelation(OtherAccountName);
 
-            Assert.Equal(Relation.BaseWeight, otherToMe.Weight);
-            Assert.Equal(Relation.BaseWeight, thirdToMe.Weight);
-            Assert.Equal(Relation.BaseWeight, otherToThird.Weight);
-            Assert.Equal(Relation.BaseWeight, thirdToOther.Weight);
+            Assert.Equal(BaseRelationWeight, otherToMe.Weight);
+            Assert.Equal(BaseRelationWeight, thirdToMe.Weight);
+            Assert.Equal(BaseRelationWeight, otherToThird.Weight);
+            Assert.Equal(BaseRelationWeight, thirdToOther.Weight);
         }
 
         [Fact]
@@ -30,7 +31,7 @@ namespace Trustcoin.Core.Test
 
             OtherAccount.Endorce(ThirdAccountName);
 
-            var expectedRelationWeight = Relation.BaseWeight.Increase(Constants.EndorcementFactor);
+            var expectedRelationWeight = BaseRelationWeight.Increase(EndorcementFactor);
             var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Weight;
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
@@ -42,7 +43,7 @@ namespace Trustcoin.Core.Test
 
             OtherAccount.Endorce(ThirdAccountName);
 
-            var expectedRelationWeight = Relation.BaseWeight.Increase(Constants.EndorcementFactor);
+            var expectedRelationWeight = BaseRelationWeight.Increase(EndorcementFactor);
             var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Weight;
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }

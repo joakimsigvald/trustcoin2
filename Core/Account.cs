@@ -40,7 +40,7 @@ namespace Trustcoin.Core
 
         public void Endorce(string name)
         {
-            (IsConnectedTo(name) ? GetPeer(name) : Connect(name)).Endorce();
+            ProducePeer(name).Endorce();
             OnEndorcedAgent(name);
         }
 
@@ -49,14 +49,13 @@ namespace Trustcoin.Core
             ? peer
             : throw new NotFound<Peer>(name);
 
-        public Weight GetTrust(string name)
-            => GetPeer(name).Trust;
-
+        public Weight GetTrust(string name) => GetPeer(name).Trust;
         public Weight SetTrust(string name, Weight trust) => GetPeer(name).Trust = trust;
-
         public Weight IncreaseTrust(string name, Weight factor) => GetPeer(name).IncreaseTrust(factor);
-
         public Weight ReduceTrust(string name, Weight factor) => GetPeer(name).ReduceTrust(factor);
+
+        public Money GetMoney(string name) => GetPeer(name).Money;
+        public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
 
         public override string ToString() => Name;
 
@@ -103,8 +102,20 @@ namespace Trustcoin.Core
             var relation = peer.GetRelation(ea.AgentName);
             if (!relation.IsConnected)
                 relation = peer.AddRelation(_network.FindAgent(ea.AgentName));
+            AddMoneyFromEndorcement(peer, relation);
             relation.IsEndorced = true;
         }
+
+        private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation)
+        {
+            var addedMoney = (2 * endorcer.Trust - 1) * (1 - (float)relation.Weight);
+            if (addedMoney <= 0) return;
+            var endorcedPeer = ProducePeer(relation.Agent.Name);
+            endorcedPeer.Money += (Money)addedMoney;
+        }
+
+        private IPeer ProducePeer(string name)
+            => IsConnectedTo(name) ? GetPeer(name) : Connect(name);
 
         private void WhenConnect(IPeer peer, ConnectAction action)
         {
@@ -118,6 +129,13 @@ namespace Trustcoin.Core
             var oldKey = PublicKey;
             _cryptography.RenewKeys();
             OnRenewedKey(oldKey, PublicKey);
+        }
+
+        public void SetRelationWeight(string subjectName, string objectName, Weight value)
+        {
+            var subject = GetPeer(subjectName);
+            var relation = subject.GetRelation(objectName);
+            relation.Weight = value;
         }
 
         private void OnAddedConnection(string agentName)

@@ -13,7 +13,7 @@
                 : value;
         }
 
-        public static implicit operator Weight(float value) => new Weight(value);
+        public static explicit operator Weight(float value) => new Weight(value);
         public static implicit operator float(Weight weight) => weight._value;
         public static Weight operator +(Weight w1, Weight w2) => (Weight)(w1._value + w2._value);
         public static float operator +(int n, Weight w2) => (Weight)(n + w2._value);
@@ -22,8 +22,8 @@
         public static Weight operator *(Weight w1, Weight w2) => (Weight)(w1._value * w2._value);
         public static Weight operator *(Weight w1, float f) => (Weight)(w1._value * f);
 
-        public Weight Increase(Weight factor) => _value + (1 - _value) * factor;
-        public Weight Reduce(Weight factor) => _value * (1 - factor);
+        public Weight Increase(Weight factor) => (Weight)(_value + (1 - _value) * factor);
+        public Weight Reduce(Weight factor) => (Weight)(_value * (1 - factor));
 
         public override string ToString() => $"{_value}";
     }

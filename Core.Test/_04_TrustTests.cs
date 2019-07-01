@@ -1,4 +1,5 @@
 using Xunit;
+using static Trustcoin.Core.Constants;
 
 namespace Trustcoin.Core.Test
 {
@@ -8,7 +9,7 @@ namespace Trustcoin.Core.Test
         public void AfterConnectedAgent_TrustIs_BaseTrust()
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Equal(Peer.BaseTrust, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(BaseTrust, MyAccount.GetTrust(OtherAccountName));
         }
 
         [Fact]
@@ -23,7 +24,7 @@ namespace Trustcoin.Core.Test
         public void CanSetTrustOfPeer(float trust)
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Equal((Weight)trust, MyAccount.SetTrust(OtherAccountName, trust));
+            Assert.Equal(trust, MyAccount.SetTrust(OtherAccountName, (Weight)trust));
         }
 
         [Theory]
@@ -32,7 +33,7 @@ namespace Trustcoin.Core.Test
         public void WhenSetTrustOutOfBounds_ThrowsOutOfBoundsException(float trust)
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, trust));
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, (Weight)trust));
         }
 
         [Theory]
@@ -45,8 +46,8 @@ namespace Trustcoin.Core.Test
         public void CanIncreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            MyAccount.IncreaseTrust(OtherAccountName, factor);
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor);
             Assert.Equal((Weight)trustAfter, MyAccount.GetTrust(OtherAccountName));
         }
 
@@ -61,8 +62,8 @@ namespace Trustcoin.Core.Test
         public void CanReduceTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            MyAccount.ReduceTrust(OtherAccountName, factor);
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            MyAccount.ReduceTrust(OtherAccountName, (Weight)factor);
             Assert.Equal(trustAfter, MyAccount.GetTrust(OtherAccountName), 6);
         }
 
@@ -75,8 +76,8 @@ namespace Trustcoin.Core.Test
             float trustBefore, float factor)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherAccountName, factor));
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor));
         }
 
         [Theory]
@@ -88,23 +89,23 @@ namespace Trustcoin.Core.Test
             float trustBefore, float factor)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.ReduceTrust(OtherAccountName, factor));
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.ReduceTrust(OtherAccountName, (Weight)factor));
         }
 
         [Theory]
         [InlineData(0.1)]
         [InlineData(0.5)]
-        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithFactor_0_5(float trustBefore)
+        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustBefore)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
 
             MyAccount.Endorce(OtherAccountName);
             var trustAfterEndorce = MyAccount.GetTrust(OtherAccountName);
 
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            var expectedTrust = MyAccount.IncreaseTrust(OtherAccountName, 0.5f);
+            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            var expectedTrust = MyAccount.IncreaseTrust(OtherAccountName, EndorcementFactor);
             Assert.Equal(expectedTrust, trustAfterEndorce);
         }
 
@@ -115,9 +116,9 @@ namespace Trustcoin.Core.Test
         public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustBefore)
         {
             MyAccount.Endorce(OtherAccountName);
-            MyAccount.GetPeer(OtherAccountName).Trust = trustBefore;
+            MyAccount.GetPeer(OtherAccountName).Trust = (Weight)trustBefore;
             MyAccount.Endorce(OtherAccountName);
-            Assert.Equal((Weight)trustBefore, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
         }
     }
 }
