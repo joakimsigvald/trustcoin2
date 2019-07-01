@@ -1,4 +1,5 @@
-using Trustcoin.Core;
+using Trustcoin.Core.Entities;
+using Trustcoin.Core.Exceptions;
 using Xunit;
 
 namespace Trustcoin.Core.Test

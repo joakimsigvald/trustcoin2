@@ -1,5 +1,6 @@
 ﻿using System;
 using Trustcoin.Core.Actions;
+using Trustcoin.Core.Entities;
 
 namespace Trustcoin.Core.Cryptography
 {

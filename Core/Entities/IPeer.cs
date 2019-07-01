@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Trustcoin.Core.Types;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public interface IPeer : IAgent
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Exceptions
 {
     public class OutOfBounds<TValue> : Exception
     {

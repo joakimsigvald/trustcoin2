@@ -1,4 +1,6 @@
-﻿namespace Trustcoin.Core.Actions
+﻿using Trustcoin.Core.Cryptography;
+
+namespace Trustcoin.Core.Actions
 {
     public interface ISignedAction
     {

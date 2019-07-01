@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public interface IAgent
     {

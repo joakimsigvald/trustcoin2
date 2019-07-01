@@ -1,6 +1,6 @@
 ﻿using Trustcoin.Core.Actions;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public interface IClient
     {

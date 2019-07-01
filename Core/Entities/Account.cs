@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
+using Trustcoin.Core.Exceptions;
+using Trustcoin.Core.Infrastructure;
+using Trustcoin.Core.Types;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public class Account : IAccount, IClient
     {

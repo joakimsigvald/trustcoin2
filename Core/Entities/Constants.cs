@@ -1,4 +1,6 @@
-﻿namespace Trustcoin.Core
+﻿using Trustcoin.Core.Types;
+
+namespace Trustcoin.Core.Entities
 {
     public static class Constants
     {

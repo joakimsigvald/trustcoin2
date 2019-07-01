@@ -1,4 +1,4 @@
-﻿namespace Trustcoin.Core
+﻿namespace Trustcoin.Core.Cryptography
 {
     public interface ISignature
     {

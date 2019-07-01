@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public class Agent : IAgent
     {

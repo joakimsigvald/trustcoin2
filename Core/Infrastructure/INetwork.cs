@@ -1,6 +1,7 @@
 ﻿using Trustcoin.Core.Actions;
+using Trustcoin.Core.Entities;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Infrastructure
 {
     public interface INetwork
     {

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Trustcoin.Core.Test
 {
-    public class CacheTests : TestBase
+    public class CashTests : TestBase
     {
     }
 }

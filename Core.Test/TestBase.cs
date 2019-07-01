@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Trustcoin.Core.Cryptography;
+using Trustcoin.Core.Entities;
+using Trustcoin.Core.Infrastructure;
 
 namespace Trustcoin.Core.Test
 {

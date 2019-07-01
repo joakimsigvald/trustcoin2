@@ -1,4 +1,6 @@
-﻿namespace Trustcoin.Core
+﻿using Trustcoin.Core.Exceptions;
+
+namespace Trustcoin.Core.Types
 {
     public struct Money
     {
@@ -7,7 +9,7 @@
         public Money(float value)
         {
             _value = value < 0
-                ? throw new OutOfBounds<float>(value) 
+                ? throw new OutOfBounds<float>(value)
                 : value;
         }
 

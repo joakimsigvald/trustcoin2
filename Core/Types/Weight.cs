@@ -1,4 +1,6 @@
-﻿namespace Trustcoin.Core
+﻿using Trustcoin.Core.Exceptions;
+
+namespace Trustcoin.Core.Types
 {
     public struct Weight
     {
@@ -8,8 +10,8 @@
 
         public Weight(float value)
         {
-            _value = value < 0 || value > 1 
-                ? throw new OutOfBounds<float>(value) 
+            _value = value < 0 || value > 1
+                ? throw new OutOfBounds<float>(value)
                 : value;
         }
 

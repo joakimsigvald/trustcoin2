@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using static Trustcoin.Core.Constants;
+using Trustcoin.Core.Types;
+using static Trustcoin.Core.Entities.Constants;
 
-namespace Trustcoin.Core
+namespace Trustcoin.Core.Entities
 {
     public class Peer : Agent, IPeer
     {
