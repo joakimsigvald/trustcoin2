@@ -19,6 +19,7 @@ namespace Trustcoin.Core.Entities
         Weight IncreaseTrust(string name, Weight factor);
         Weight ReduceTrust(string name, Weight factor);
         void RenewKeys();
+        Weight GetRelationWeight(string subjectName, string objectName);
         void SetRelationWeight(string subjectName, string objectName, Weight value);
         Money GetMoney(string name);
         void SetMoney(string name, Money money);

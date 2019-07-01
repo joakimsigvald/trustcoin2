@@ -60,6 +60,20 @@ namespace Trustcoin.Core.Entities
         public Money GetMoney(string name) => GetPeer(name).Money;
         public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
 
+        public void SetRelationWeight(string subjectName, string objectName, Weight value)
+        {
+            var subject = GetPeer(subjectName);
+            var relation = subject.GetRelation(objectName);
+            relation.Weight = value;
+        }
+
+        public Weight GetRelationWeight(string subjectName, string objectName)
+        {
+            var subject = GetPeer(subjectName);
+            var relation = subject.GetRelation(objectName);
+            return relation.Weight;
+        }
+
         public override string ToString() => Name;
 
         public bool Update(string sourceAgentName, ISignedAction signedAction)
@@ -132,13 +146,6 @@ namespace Trustcoin.Core.Entities
             var oldKey = PublicKey;
             _cryptography.RenewKeys();
             OnRenewedKey(oldKey, PublicKey);
-        }
-
-        public void SetRelationWeight(string subjectName, string objectName, Weight value)
-        {
-            var subject = GetPeer(subjectName);
-            var relation = subject.GetRelation(objectName);
-            relation.Weight = value;
         }
 
         private void OnAddedConnection(string agentName)
