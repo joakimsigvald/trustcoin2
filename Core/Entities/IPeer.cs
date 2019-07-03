@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Trustcoin.Core.Types;
+﻿using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Entities
 {

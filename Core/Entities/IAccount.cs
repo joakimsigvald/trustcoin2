@@ -8,6 +8,9 @@ namespace Trustcoin.Core.Entities
         IEnumerable<IPeer> Peers { get; }
         string Name { get; }
         IPeer Self { get; }
+
+        void SyncAll();
+
         byte[] PublicKey { get; }
 
         IPeer Connect(string name);

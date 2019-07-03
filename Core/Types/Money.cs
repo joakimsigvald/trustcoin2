@@ -4,20 +4,20 @@ namespace Trustcoin.Core.Types
 {
     public struct Money
     {
-        private readonly float _value;
+        public readonly float Value;
 
         public Money(float value)
         {
-            _value = value < 0
+            Value = value < 0
                 ? throw new OutOfBounds<float>(value)
                 : value;
         }
 
         public static explicit operator Money(float value) => new Money(value);
-        public static implicit operator float(Money money) => money._value;
-        public static Money operator +(Money m1, Money m2) => (Money)(m1._value + m2._value);
-        public static Money operator -(Money m1, Money m2) => (Money)(m1._value - m2._value);
+        public static implicit operator float(Money money) => money.Value;
+        public static Money operator +(Money m1, Money m2) => (Money)(m1.Value + m2.Value);
+        public static Money operator -(Money m1, Money m2) => (Money)(m1.Value - m2.Value);
 
-        public override string ToString() => $"{_value}";
+        public override string ToString() => $"{Value}";
     }
 }

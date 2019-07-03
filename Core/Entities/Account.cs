@@ -24,11 +24,15 @@ namespace Trustcoin.Core.Entities
         }
 
         private IPeer CreateSelf()
-            => new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
+        {
+            var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
             {
                 Trust = Weight.Max,
                 IsEndorced = true
             };
+            self.AddRelation(self);
+            return self;
+        }
 
         public string Name { get; private set; }
         public byte[] PublicKey => _cryptography.PublicKey;
@@ -57,7 +61,7 @@ namespace Trustcoin.Core.Entities
         }
 
         public IPeer GetPeer(string name)
-            => name == Name ? Self 
+            => name == Name ? Self
             : _peers.TryGetValue(name, out var peer) ? peer
             : throw new NotFound<Peer>(name);
 
@@ -92,18 +96,52 @@ namespace Trustcoin.Core.Entities
 
         public override string ToString() => Name;
 
-        public bool Update(string sourceAgentName, ISignedAction signedAction)
+        public void SyncAll()
         {
-            if (!IsConnectedTo(sourceAgentName))
+            string[] peersToUpdate = Peers.Select(peer => peer.Name).ToArray();
+            var moneyUpdates = Peers
+                .ToDictionary(
+                peer => peer,
+                peer => GetUpdatesFromPeer(peer, peersToUpdate));
+            var individualUpdates = moneyUpdates
+                .SelectMany(x => x.Value.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))
+                .ToArray();
+            var peerUpdates = individualUpdates
+                .GroupBy(iu => iu.subject)
+                .Select(g => (peer: g.Key, money: g.Select(x => (weight: x.target.Trust, value: x.money.Value))
+                .WeightedMean()))
+                .ToList();
+            peerUpdates.ForEach(pu => SetMoney(pu.peer, (Money)pu.money));
+        }
+
+        private IDictionary<string, Money> GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate)
+            => _network.RequestUpdate(
+                peer.Name,
+                peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray());
+
+        public bool Update(string subjectName, ISignedAction signedAction)
+        {
+            if (!IsConnectedTo(subjectName))
                 return false;
-            var peer = GetPeer(sourceAgentName);
+            var peer = GetPeer(subjectName);
             _cryptography.VerifySignature(signedAction, peer);
             UpdatePeer(peer, signedAction.Action);
             return true;
         }
 
-        private void UpdatePeer(IPeer peer, IAction action) {
-            switch (action) {
+        public IDictionary<string, Money> RequestUpdate(string[] subjectNames)
+        {
+            var requestedPeers = Peers.Select(p => p.Name)
+                .Intersect(subjectNames)
+            .Select(GetPeer)
+            .ToArray();
+            return requestedPeers.ToDictionary(p => p.Name, p => p.Money);
+        }
+
+        private void UpdatePeer(IPeer peer, IAction action)
+        {
+            switch (action)
+            {
                 case ConnectAction ca:
                     WhenConnect(peer, ca);
                     break;

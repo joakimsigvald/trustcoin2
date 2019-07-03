@@ -32,6 +32,12 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
+        public void SelfIsConnectedToSelf()
+        {
+            Assert.True(MyAccount.Self.IsConnectedTo(MyAccountName));
+        }
+
+        [Fact]
         public void CanGetSelfByName()
         {
             Assert.NotNull(MyAccount.GetPeer(MyAccountName));

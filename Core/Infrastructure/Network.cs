@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
+using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Infrastructure
 {
@@ -20,10 +21,16 @@ namespace Trustcoin.Core.Infrastructure
         public IAgent FindAgent(string name)
             => _accounts.TryGetValue(name, out var account) ? new Agent(account) : null;
 
-        public bool SendAction(string targetName, string sourceName, ISignedAction action)
+        public IDictionary<string, Money> RequestUpdate(string targetName, string[] subjectNames)
         {
             var targetClient = GetClient(targetName);
-            return targetClient.Update(sourceName, action);
+            return targetClient.RequestUpdate(subjectNames);
+        }
+
+        public bool SendAction(string targetName, string subjectName, ISignedAction action)
+        {
+            var targetClient = GetClient(targetName);
+            return targetClient.Update(subjectName, action);
         }
 
         private IClient GetClient(string name)
