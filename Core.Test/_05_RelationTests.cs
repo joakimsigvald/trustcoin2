@@ -53,12 +53,6 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void WhenConnectWithSelf_ThrowsInvalidOperationException()
-        {
-            Assert.Throws<InvalidOperationException>(() => MyAccount.Connect(MyAccountName));
-        }
-
-        [Fact]
         public void AfterInterconnectedAgents_RelationsAre_BaseRelation()
         {
             Interconnect(MyAccount, OtherAccount, ThirdAccount);

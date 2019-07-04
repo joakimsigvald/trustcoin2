@@ -1,3 +1,4 @@
+using System.Linq;
 using Trustcoin.Core.Types;
 using Xunit;
 
@@ -102,6 +103,42 @@ namespace Trustcoin.Core.Test
             MyAccount.SyncAll();
 
             Assert.Equal(myMoneyAfter, MyAccount.Self.Money);
+        }
+
+        [Theory]
+        [InlineData(0, new[] { 1f }, new[] { 0 }, 0)]
+        [InlineData(0, new[] { 1f }, new[] { 100 }, 50)]
+        [InlineData(0, new[] { 1f, 1f }, new[] { 100, 100 }, 100)]
+        [InlineData(0, new[] { 1f, 1f }, new[] { 90, -1 }, 30)]
+        [InlineData(0, new[] { 1f, 0.5f }, new[] { 90, -1 }, 36)]
+        [InlineData(0, new[] { 0.5f, 1f, 0.5f }, new[] { 90, -1, 100 }, 30)]
+        [InlineData(30, new[] { 0.5f, 1f, 0.5f }, new[] { 90, -1, 100 }, 50)]
+        public void WhenSyncPeer_ThenUpdateFromConnectedPeersAndWeighBySumOfTheirTrust(
+            float peerMoneyBefore,
+            float[] peerTrusts,
+            int[] peerAssessments,
+            float peerMoneyAfter)
+        {
+            var peers = peerTrusts.Select((pt, i) => _network.CreateAccount($"Peer{i}")).ToArray();
+            int i = 0;
+            var peerToUpdate = peers[0];
+            foreach (var peer in peers)
+            {
+                Interconnect(MyAccount, peer);
+                MyAccount.SetTrust(peer.Name, (Weight)peerTrusts[i]);
+                var peerAssessment = peerAssessments[i];
+                if (peerAssessment >= 0)
+                {
+                    Interconnect(peer, peerToUpdate);
+                    peer.SetMoney(peerToUpdate.Name, (Money)peerAssessments[i]);
+                }
+                i++;
+            }
+            MyAccount.SetMoney(peerToUpdate.Name, (Money)peerMoneyBefore);
+
+            MyAccount.SyncAll();
+
+            Assert.Equal(peerMoneyAfter, MyAccount.GetMoney(peerToUpdate.Name));
         }
     }
 }

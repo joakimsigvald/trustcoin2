@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core
 {
@@ -20,7 +19,7 @@ namespace Trustcoin.Core
             return (midMin + midMax) / 2;
         }
 
-        public static float WeightedMean(this IEnumerable<(Weight weight, float value)> values)
+        public static float WeightedMean(this IEnumerable<(float weight, float value)> values)
         {
             var orderedValues = values.OrderBy(v => v.value).ToArray();
             var len = orderedValues.Length;
@@ -35,6 +34,18 @@ namespace Trustcoin.Core
             sum = 0f;
             var midMax = orderedValues.SkipWhile(wv => (sum += wv.weight) < halfTotalWeight).First().value;
             return (midMin + midMax) / 2;
+        }
+
+        public static float WeightedAverage(this IEnumerable<(float weight, float value)> values)
+        {
+            var orderedValues = values.OrderBy(v => v.value).ToArray();
+            var len = orderedValues.Length;
+            if (len == 0)
+                throw new InvalidOperationException();
+            if (len == 1)
+                return orderedValues.Single().value;
+            var totalWeight = orderedValues.Sum(wv => wv.weight);
+            return values.Sum(v => v.value * v.weight) / totalWeight;
         }
     }
 }

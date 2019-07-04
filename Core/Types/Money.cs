@@ -18,6 +18,6 @@ namespace Trustcoin.Core.Types
         public static Money operator +(Money m1, Money m2) => (Money)(m1.Value + m2.Value);
         public static Money operator -(Money m1, Money m2) => (Money)(m1.Value - m2.Value);
 
-        public override string ToString() => $"{Value}";
+        public override string ToString() => $"${Value}";
     }
 }

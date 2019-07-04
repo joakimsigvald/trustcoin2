@@ -41,8 +41,8 @@ namespace Trustcoin.Core.Entities
 
         public IPeer Connect(string name)
         {
-            if (name == Name)
-                throw new InvalidOperationException("Cannot connect with self");
+            if (IsConnectedTo(name))
+                return GetPeer(name);
             var newPeer = _network.FindAgent(name).AsPeer();
             _peers[name] = newPeer;
             OnAddedConnection(name);
@@ -98,21 +98,34 @@ namespace Trustcoin.Core.Entities
 
         public void SyncAll()
         {
+            var totalTrust = Peers.Sum(p => p.Trust);
             string[] peersToUpdate = Peers.Select(peer => peer.Name).ToArray();
-            var moneyUpdates = Peers
-                .ToDictionary(
-                peer => peer,
-                peer => GetUpdatesFromPeer(peer, peersToUpdate));
-            var individualUpdates = moneyUpdates
+            var peerAssessments = Peers
+                .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate))
                 .SelectMany(x => x.Value.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))
-                .ToArray();
-            var peerUpdates = individualUpdates
                 .GroupBy(iu => iu.subject)
-                .Select(g => (peer: g.Key, money: g.Select(x => (weight: x.target.Trust, value: x.money.Value))
-                .WeightedMean()))
-                .ToList();
-            peerUpdates.ForEach(pu => SetMoney(pu.peer, (Money)pu.money));
+                .ToDictionary(
+                g => GetPeer(g.Key),
+                g => g.Select(x => (x.target, x.money)).ToArray());
+            foreach (var kvp in peerAssessments)
+                SyncPeer(totalTrust, kvp.Key, kvp.Value);
         }
+
+        private void SyncPeer(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
+        {
+            subject.Money = ComputeMoney(totalTrust, subject, assessments);
+        }
+
+        private Money ComputeMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
+        {
+            var sumOfTrusts = assessments.Sum(a => a.target.Trust);
+            var meanAssessment = ComputeMeanAssessment(subject, assessments);
+            var weightedMeanAssessment = (Money)new[] { (sumOfTrusts, meanAssessment), (totalTrust - sumOfTrusts, (float)subject.Money) }.WeightedAverage();
+            return weightedMeanAssessment;
+        }
+
+        private Money ComputeMeanAssessment(IPeer subject, (IPeer target, Money money)[] assessments)
+            => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
         private IDictionary<string, Money> GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate)
             => _network.RequestUpdate(
