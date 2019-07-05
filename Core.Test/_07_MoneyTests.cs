@@ -53,7 +53,7 @@ namespace Trustcoin.Core.Test
             float expectedIncrease)
         {
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustForEndorcingPeer);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
             MyAccount.SetMoney(ThirdAccountName, (Money)initialMoney);
 
@@ -77,7 +77,7 @@ namespace Trustcoin.Core.Test
             float expectedIncrease)
         {
             Interconnect(MyAccount, OtherAccount);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustForEndorcingPeer);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, MyAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
             MyAccount.SetMoney(MyAccountName, (Money)initialMoney);
 

@@ -27,7 +27,7 @@ namespace Trustcoin.Core.Test
             Interconnect(MyAccount, OtherAccount);
             OtherAccount.SetMoney(MyAccountName, (Money)peerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (Weight)1);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
 
             MyAccount.SyncAll();
 
@@ -48,8 +48,8 @@ namespace Trustcoin.Core.Test
             OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
             ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (Weight)1);
-            MyAccount.SetTrust(ThirdAccountName, (Weight)1);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
 
             MyAccount.SyncAll();
 
@@ -73,7 +73,7 @@ namespace Trustcoin.Core.Test
             MyAccount.SetMoney(OtherAccountName, (Money)myPeerMoneyBefore);
             OtherAccount.Self.Money = (Money)peerSelfMoneyBefore;
             OtherAccount.SetMoney(MyAccountName, (Money)peerMyMoneyBefore);
-            MyAccount.SetTrust(OtherAccountName, (Weight)1);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
 
             MyAccount.SyncAll();
 
@@ -85,6 +85,7 @@ namespace Trustcoin.Core.Test
         [InlineData(0, 0.5, 50, 0.5, 100, 25)]
         [InlineData(0, 1, 50, 0.5, 100, 50)]
         [InlineData(0, 0.5, 50, 1, 100, 50)]
+        [InlineData(0, -0.5, 150, 1, 100, 50)]
         public void Given_2_PeersWithFullConnectivity_WhenSyncSelf_ThenGetMeanWeightedByTrustPeerMoney(
             float myMoneyBefore,
             float firstPeerTrust,
@@ -97,8 +98,8 @@ namespace Trustcoin.Core.Test
             OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
             ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (Weight)firstPeerTrust);
-            MyAccount.SetTrust(ThirdAccountName, (Weight)secondPeerTrust);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)firstPeerTrust);
+            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)secondPeerTrust);
 
             MyAccount.SyncAll();
 
@@ -113,6 +114,8 @@ namespace Trustcoin.Core.Test
         [InlineData(0, new[] { 1f, 0.5f }, new[] { 90, -1 }, 36)]
         [InlineData(0, new[] { 0.5f, 1f, 0.5f }, new[] { 90, -1, 100 }, 30)]
         [InlineData(30, new[] { 0.5f, 1f, 0.5f }, new[] { 90, -1, 100 }, 50)]
+        [InlineData(0, new[] { 0.5f, 1f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f }, new[] { 90, -1, 100, 200, 200, 200, 200 }, 30)]
+        [InlineData(0, new[] { 0.5f, 1f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f }, new[] { 90, -1, 100, 10, 10, 10, 10 }, 30)]
         public void WhenSyncPeer_ThenUpdateFromConnectedPeersAndWeighBySumOfTheirTrust(
             float peerMoneyBefore,
             float[] peerTrusts,
@@ -125,7 +128,7 @@ namespace Trustcoin.Core.Test
             foreach (var peer in peers)
             {
                 Interconnect(MyAccount, peer);
-                MyAccount.SetTrust(peer.Name, (Weight)peerTrusts[i]);
+                MyAccount.SetTrust(peer.Name, (SignedWeight)peerTrusts[i]);
                 var peerAssessment = peerAssessments[i];
                 if (peerAssessment >= 0)
                 {

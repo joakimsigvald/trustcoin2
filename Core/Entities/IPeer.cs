@@ -6,11 +6,11 @@ namespace Trustcoin.Core.Entities
     {
         void Endorce();
         bool Endorces(string name);
-        Weight Trust { get; set; }
+        SignedWeight Trust { get; set; }
         Money Money { get; set; }
 
         Relation AsRelation() => new Relation(Clone());
-        Weight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);
-        Weight ReduceTrust(Weight factor) => Trust = Trust.Reduce(factor);
+        SignedWeight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);
+        SignedWeight DecreaseTrust(Weight factor) => Trust = Trust.Decrease(factor);
     }
 }

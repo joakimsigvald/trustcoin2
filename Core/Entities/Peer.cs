@@ -11,7 +11,7 @@ namespace Trustcoin.Core.Entities
         {
         }
 
-        public Weight Trust { get; set; }
+        public SignedWeight Trust { get; set; }
         public Money Money { get; set; }
 
         public void Endorce()

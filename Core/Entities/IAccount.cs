@@ -17,10 +17,10 @@ namespace Trustcoin.Core.Entities
         bool IsConnectedTo(string name);
         IPeer GetPeer(string name);
         void Endorce(string name);
-        Weight GetTrust(string name);
-        Weight SetTrust(string name, Weight value);
-        Weight IncreaseTrust(string name, Weight factor);
-        Weight ReduceTrust(string name, Weight factor);
+        SignedWeight GetTrust(string name);
+        SignedWeight SetTrust(string name, SignedWeight value);
+        SignedWeight IncreaseTrust(string name, Weight factor);
+        SignedWeight DecreaseTrust(string name, Weight factor);
         void RenewKeys();
         Weight GetRelationWeight(string subjectName, string objectName);
         void SetRelationWeight(string subjectName, string objectName, Weight value);

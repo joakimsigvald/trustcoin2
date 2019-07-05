@@ -22,13 +22,19 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void Account_TrustForSelfIsMax()
         {
-            Assert.Equal(Weight.Max, MyAccount.Self.Trust);
+            Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
         }
 
         [Fact]
         public void IsConnectedToSelf()
         {
             Assert.True(MyAccount.IsConnectedTo(MyAccountName));
+        }
+
+        [Fact]
+        public void SelfHasMaxRelationToSelf()
+        {
+            Assert.Equal((Weight)1, MyAccount.Self.GetRelation(MyAccount.Name).Weight);
         }
 
         [Fact]

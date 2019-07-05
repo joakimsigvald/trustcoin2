@@ -21,13 +21,14 @@ namespace Trustcoin.Core.Entities
             _cryptography = cryptography;
             Name = name;
             Self = CreateSelf();
+            SetRelationWeight(Name, Name, Weight.Max);
         }
 
         private IPeer CreateSelf()
         {
             var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
             {
-                Trust = Weight.Max,
+                Trust = SignedWeight.Max,
                 IsEndorced = true
             };
             self.AddRelation(self);
@@ -53,6 +54,7 @@ namespace Trustcoin.Core.Entities
             => name == Name || _peers.ContainsKey(name);
 
         public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
+        public IEnumerable<IPeer> TrustedPeers => Peers.Where(p => p.Trust > 0);
 
         public void Endorce(string name)
         {
@@ -65,10 +67,10 @@ namespace Trustcoin.Core.Entities
             : _peers.TryGetValue(name, out var peer) ? peer
             : throw new NotFound<Peer>(name);
 
-        public Weight GetTrust(string name) => GetPeer(name).Trust;
-        public Weight SetTrust(string name, Weight trust) => GetPeer(name).Trust = trust;
-        public Weight IncreaseTrust(string name, Weight factor) => GetPeer(name).IncreaseTrust(factor);
-        public Weight ReduceTrust(string name, Weight factor) => GetPeer(name).ReduceTrust(factor);
+        public SignedWeight GetTrust(string name) => GetPeer(name).Trust;
+        public SignedWeight SetTrust(string name, SignedWeight trust) => GetPeer(name).Trust = trust;
+        public SignedWeight IncreaseTrust(string name, Weight factor) => GetPeer(name).IncreaseTrust(factor);
+        public SignedWeight DecreaseTrust(string name, Weight factor) => GetPeer(name).DecreaseTrust(factor);
 
         public Money GetMoney(string name) => GetPeer(name).Money;
         public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
@@ -100,7 +102,7 @@ namespace Trustcoin.Core.Entities
         {
             var totalTrust = Peers.Sum(p => p.Trust);
             string[] peersToUpdate = Peers.Select(peer => peer.Name).ToArray();
-            var peerAssessments = Peers
+            var peerAssessments = TrustedPeers
                 .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate))
                 .SelectMany(x => x.Value.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))
                 .GroupBy(iu => iu.subject)
@@ -119,12 +121,12 @@ namespace Trustcoin.Core.Entities
         private Money ComputeMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
         {
             var sumOfTrusts = assessments.Sum(a => a.target.Trust);
-            var meanAssessment = ComputeMeanAssessment(subject, assessments);
+            var meanAssessment = ComputeMeanAssessment(assessments);
             var weightedMeanAssessment = (Money)new[] { (sumOfTrusts, meanAssessment), (totalTrust - sumOfTrusts, (float)subject.Money) }.WeightedAverage();
             return weightedMeanAssessment;
         }
 
-        private Money ComputeMeanAssessment(IPeer subject, (IPeer target, Money money)[] assessments)
+        private Money ComputeMeanAssessment((IPeer target, Money money)[] assessments)
             => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
         private IDictionary<string, Money> GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate)

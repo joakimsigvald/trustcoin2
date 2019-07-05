@@ -1,8 +1,9 @@
-﻿using Trustcoin.Core.Exceptions;
+﻿using System;
+using Trustcoin.Core.Exceptions;
 
 namespace Trustcoin.Core.Types
 {
-    public struct Weight
+    public struct Weight : IEquatable<Weight>
     {
         private readonly float _value;
 
@@ -28,5 +29,7 @@ namespace Trustcoin.Core.Types
         public Weight Reduce(Weight factor) => (Weight)(_value * (1 - factor));
 
         public override string ToString() => $"{_value}";
+
+        public bool Equals(Weight other) => other._value == _value;
     }
 }

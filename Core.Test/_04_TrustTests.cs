@@ -15,70 +15,72 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void TrustOfSelf_Is_1()
+        public void TrustOfSelf_Is_MaxTrust()
         {
-            Assert.Equal(Weight.Max, MyAccount.Self.Trust);
+            Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
         }
 
         [Theory]
         [InlineData(0.1)]
         [InlineData(0.5)]
-        public void CanSetTrustOfPeer(float trust)
+        [InlineData(-0.5)]
+        public void CanSetAndGetTrustOfPeer(float trustValue)
         {
+            var trust = (SignedWeight)trustValue;
             MyAccount.Connect(OtherAccountName);
-            Assert.Equal(trust, MyAccount.SetTrust(OtherAccountName, (Weight)trust));
+            MyAccount.SetTrust(OtherAccountName, trust);
+            Assert.Equal(trust, MyAccount.GetTrust(OtherAccountName));
         }
 
         [Theory]
-        [InlineData(-0.001)]
+        [InlineData(-1.001)]
         [InlineData(1.001)]
         public void WhenSetTrustOutOfBounds_ThrowsOutOfBoundsException(float trust)
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, (Weight)trust));
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, (SignedWeight)trust));
         }
 
         [Theory]
         [InlineData(0, 0, 0)]
-        [InlineData(0, 1, 1)]
-        [InlineData(0, 0.5, 0.5)]
-        [InlineData(0.2, 0.25, 0.4)]
-        [InlineData(0.2, 0.5, 0.6)]
-        [InlineData(0.5, 0.8, 0.9)]
+        [InlineData(0, 1, 0.5)]
+        [InlineData(0, 0.5, 0.25)]
+        [InlineData(1, 1, 1)]
+        [InlineData(-1, 1, -0.5)]
         public void CanIncreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
             MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor);
-            Assert.Equal((Weight)trustAfter, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherAccountName));
         }
 
         [Theory]
         [InlineData(0, 0, 0)]
-        [InlineData(1, 1, 0)]
-        [InlineData(1, 0.1, 0.9)]
-        [InlineData(1, 0.5, 0.5)]
-        [InlineData(0.2, 0.25, 0.15)]
-        [InlineData(0.2, 0.5, 0.1)]
-        [InlineData(0.5, 0.8, 0.1)]
-        public void CanReduceTrustWithFactor(float trustBefore, float factor, float trustAfter)
+        [InlineData(0, 1, -0.5)]
+        [InlineData(0, 0.5, -0.25)]
+        [InlineData(1, 1, 0.5)]
+        [InlineData(-1, 1, -1)]
+        public void CanDecreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
-            MyAccount.ReduceTrust(OtherAccountName, (Weight)factor);
-            Assert.Equal(trustAfter, MyAccount.GetTrust(OtherAccountName), 6);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
+
+            MyAccount.DecreaseTrust(OtherAccountName, (Weight)factor);
+
+            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherAccountName), 6);
         }
 
         [Theory]
         [InlineData(0, -0.001)]
         [InlineData(1, -0.001)]
         [InlineData(0, 1.001)]
-        [InlineData(1, 1.001)]
+        [InlineData(-1, 1.001)]
         public void WhenIncreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor));
         }
 
@@ -86,40 +88,42 @@ namespace Trustcoin.Core.Test
         [InlineData(0, -0.001)]
         [InlineData(1, -0.001)]
         [InlineData(0, 1.001)]
-        [InlineData(1, 1.001)]
-        public void WhenReduceTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
+        [InlineData(-1, 1.001)]
+        public void WhenDecreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.ReduceTrust(OtherAccountName, (Weight)factor));
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherAccountName, (Weight)factor));
         }
 
         [Theory]
         [InlineData(0.1)]
         [InlineData(0.5)]
-        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustBefore)
+        [InlineData(-0.5)]
+        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
         {
+            var trustBefore = (SignedWeight)trustValueBefore;
             MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
+            MyAccount.SetTrust(OtherAccountName, trustBefore);
 
             MyAccount.Endorce(OtherAccountName);
-            var trustAfterEndorce = MyAccount.GetTrust(OtherAccountName);
 
-            MyAccount.SetTrust(OtherAccountName, (Weight)trustBefore);
-            var expectedTrust = MyAccount.IncreaseTrust(OtherAccountName, EndorcementFactor);
-            Assert.Equal(expectedTrust, trustAfterEndorce);
+            Assert.Equal(trustBefore.Increase(EndorcementFactor), MyAccount.GetTrust(OtherAccountName));
         }
 
         [Theory]
         [InlineData(0.1)]
         [InlineData(0.5)]
-        [InlineData(0.8)]
-        public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustBefore)
+        [InlineData(-0.5)]
+        public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustValueBefore)
         {
+            var trustBefore = (SignedWeight)trustValueBefore;
             MyAccount.Endorce(OtherAccountName);
-            MyAccount.GetPeer(OtherAccountName).Trust = (Weight)trustBefore;
+            MyAccount.SetTrust(OtherAccountName, trustBefore);
+
             MyAccount.Endorce(OtherAccountName);
+
             Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
         }
     }
