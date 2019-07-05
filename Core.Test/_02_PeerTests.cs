@@ -60,7 +60,7 @@ namespace Trustcoin.Core.Test
         public void WhenTryGetNonExistingPeer_ThrowsNotFoundPeer()
         {
             var name = "XXX";
-            var ex = Assert.Throws<NotFound<Peer>>(() => MyAccount.GetPeer(name));
+            var ex = Assert.Throws<NotFound<IPeer>>(() => MyAccount.GetPeer(name));
             Assert.Equal(name, ex.ParamName);
         }
     }

@@ -6,6 +6,7 @@ using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Exceptions;
 using Trustcoin.Core.Infrastructure;
 using Trustcoin.Core.Types;
+using static Trustcoin.Core.Entities.Constants;
 
 namespace Trustcoin.Core.Entities
 {
@@ -65,7 +66,7 @@ namespace Trustcoin.Core.Entities
         public IPeer GetPeer(string name)
             => name == Name ? Self
             : _peers.TryGetValue(name, out var peer) ? peer
-            : throw new NotFound<Peer>(name);
+            : throw new NotFound<IPeer>(name);
 
         public SignedWeight GetTrust(string name) => GetPeer(name).Trust;
         public SignedWeight SetTrust(string name, SignedWeight trust) => GetPeer(name).Trust = trust;
@@ -113,6 +114,21 @@ namespace Trustcoin.Core.Entities
                 SyncPeer(totalTrust, kvp.Key, kvp.Value);
         }
 
+        public void CreateArtefact(string name)
+        {
+            OnCreatedArtefact(new Artefact(name));
+        }
+
+        public bool Update(string subjectName, ISignedAction signedAction)
+        {
+            if (!IsConnectedTo(subjectName))
+                return false;
+            var peer = GetPeer(subjectName);
+            _cryptography.VerifySignature(signedAction, peer);
+            UpdatePeer(peer, signedAction.Action);
+            return true;
+        }
+
         private void SyncPeer(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
         {
             subject.Money = ComputeMoney(totalTrust, subject, assessments);
@@ -134,15 +150,6 @@ namespace Trustcoin.Core.Entities
                 peer.Name,
                 peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray());
 
-        public bool Update(string subjectName, ISignedAction signedAction)
-        {
-            if (!IsConnectedTo(subjectName))
-                return false;
-            var peer = GetPeer(subjectName);
-            _cryptography.VerifySignature(signedAction, peer);
-            UpdatePeer(peer, signedAction.Action);
-            return true;
-        }
 
         public IDictionary<string, Money> RequestUpdate(string[] subjectNames)
         {
@@ -166,6 +173,9 @@ namespace Trustcoin.Core.Entities
                 case RenewKeyAction ra:
                     WhenRenewKey(peer, ra);
                     break;
+                case CreateArtefactAction caa:
+                    WhenCreateArtefact(peer, caa);
+                    break;
                 case NoAction _:
                     break;
                 default: throw new NotImplementedException("Action not implemented: " + action);
@@ -181,15 +191,32 @@ namespace Trustcoin.Core.Entities
             peer.PublicKey = ra.NewKey;
         }
 
+        private void WhenConnect(IPeer peer, ConnectAction action)
+        {
+            if (peer.IsConnectedTo(action.AgentName))
+                return;
+            peer.AddRelation(_network.FindAgent(action.AgentName));
+        }
+
         private void WhenEndorce(IPeer peer, EndorceAction ea)
         {
-            if (peer.Endorces(ea.AgentName))
-                return;
             var relation = peer.GetRelation(ea.AgentName);
             if (!relation.IsConnected)
                 relation = peer.AddRelation(_network.FindAgent(ea.AgentName));
+            else if (relation.IsEndorced)
+            {
+                peer.DecreaseTrust(DoubleEndorceDecreaseTrustWeight);
+                return;
+            }
             AddMoneyFromEndorcement(peer, relation);
             relation.IsEndorced = true;
+        }
+
+        private void WhenCreateArtefact(IPeer peer, CreateArtefactAction action)
+        {
+            if (peer.HasArtefact(action.Artefact.Name))
+                return;
+            peer.AddArtefact(action.Artefact);
         }
 
         private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation)
@@ -202,13 +229,6 @@ namespace Trustcoin.Core.Entities
 
         private IPeer ProducePeer(string name)
             => IsConnectedTo(name) ? GetPeer(name) : Connect(name);
-
-        private void WhenConnect(IPeer peer, ConnectAction action)
-        {
-            if (peer.IsConnectedTo(action.AgentName))
-                return;
-            peer.AddRelation(_network.FindAgent(action.AgentName));
-        }
 
         private void OnAddedConnection(string agentName)
         {
@@ -223,6 +243,11 @@ namespace Trustcoin.Core.Entities
         private void OnEndorcedAgent(string agentName)
         {
             SendAction(new EndorceAction(agentName));
+        }
+
+        private void OnCreatedArtefact(IArtefact artefact)
+        {
+            SendAction(new CreateArtefactAction(artefact));
         }
 
         private void SendAction(IAction action)

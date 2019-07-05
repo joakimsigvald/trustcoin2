@@ -12,5 +12,8 @@ namespace Trustcoin.Core.Entities
         Relation AsRelation() => new Relation(Clone());
         SignedWeight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);
         SignedWeight DecreaseTrust(Weight factor) => Trust = Trust.Decrease(factor);
+        void AddArtefact(IArtefact artefact);
+        bool HasArtefact(string artefactName);
+        IArtefact GetArtefact(string artefactName);
     }
 }

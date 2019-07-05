@@ -7,6 +7,9 @@ namespace Trustcoin.Core.Entities
     {
         IEnumerable<IPeer> Peers { get; }
         string Name { get; }
+
+        void CreateArtefact(string name);
+
         IPeer Self { get; }
 
         void SyncAll();

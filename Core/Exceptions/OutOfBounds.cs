@@ -9,4 +9,12 @@ namespace Trustcoin.Core.Exceptions
         {
         }
     }
+
+    public class DuplicateKey<TKey> : Exception
+    {
+        public DuplicateKey(TKey key)
+            : base("Duplicate key: " + key)
+        {
+        }
+    }
 }

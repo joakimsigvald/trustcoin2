@@ -109,5 +109,18 @@ namespace Trustcoin.Core.Test
             var actualRelationWeight = MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName);
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
+
+        [Fact]
+        public void When_I_EndorcePeerTwice_Then_I_LooseTrust()
+        {
+            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            MyAccount.Endorce(ThirdAccountName);
+            var trustBefore = OtherAccount.GetTrust(MyAccountName);
+            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceDecreaseTrustWeight);
+
+            MyAccount.Endorce(ThirdAccountName);
+
+            Assert.Equal(expectedTrustAfter, OtherAccount.GetTrust(MyAccountName));
+        }
     }
 }
