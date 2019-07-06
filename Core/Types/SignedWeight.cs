@@ -16,8 +16,17 @@ namespace Trustcoin.Core.Types
                 : value;
         }
 
+        public bool IsNegative => _value < 0;
+
         public static explicit operator SignedWeight(float value) => new SignedWeight(value);
-        public static implicit operator float(SignedWeight sweight) => Math.Max(0, sweight._value);
+        public static implicit operator float(SignedWeight sw) => Math.Max(0, sw._value);
+        public static explicit operator Weight(SignedWeight sw) => (Weight)(float)sw;
+        public static SignedWeight operator -(SignedWeight sw) => (SignedWeight)(-sw._value);
+
+        public SignedWeight Adjust(SignedWeight factor)
+            => factor.IsNegative
+            ? Decrease((Weight) (-factor))
+            : Increase((Weight) factor);
 
         public SignedWeight Increase(Weight factor)
         {

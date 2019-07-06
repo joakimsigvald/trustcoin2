@@ -13,6 +13,7 @@ namespace Trustcoin.Core.Entities
     public class Account : IAccount, IClient
     {
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
+        private readonly IDictionary<string, IArtefact> _knownArtefacts = new Dictionary<string, IArtefact>();
         private readonly INetwork _network;
         private readonly ICryptography _cryptography;
 
@@ -23,17 +24,6 @@ namespace Trustcoin.Core.Entities
             Name = name;
             Self = CreateSelf();
             SetRelationWeight(Name, Name, Weight.Max);
-        }
-
-        private IPeer CreateSelf()
-        {
-            var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
-            {
-                Trust = SignedWeight.Max,
-                IsEndorced = true
-            };
-            self.AddRelation(self);
-            return self;
         }
 
         public string Name { get; private set; }
@@ -62,6 +52,32 @@ namespace Trustcoin.Core.Entities
             ProducePeer(name).Endorce();
             OnEndorcedAgent(name);
         }
+
+        public void EndorceArtefact(IArtefact artefact)
+        {
+            if (artefact.OwnerName is null)
+                throw new ArgumentException("Tried to endorce artefact without owner");
+            var owner = ProducePeer(artefact.OwnerName);
+            if (KnowsArtefact(artefact.Name))
+            {
+                artefact = GetArtefact(artefact.Name);
+                if (owner.Name != artefact.OwnerName)
+                    throw new ArgumentException($"Tried to endorce artefact with invalid owner: {owner.Name}");
+            }
+            else
+                _knownArtefacts.Add(artefact.Name, artefact);
+            OnEndorcedArtefact(artefact);
+        }
+
+        public bool EndorcesArtefact(string agentName, string artefactName)
+            => KnowsArtefact(artefactName)
+            && GetArtefact(artefactName).IsEndorcedBy(agentName);
+
+        public bool KnowsArtefact(string name)
+            => _knownArtefacts.ContainsKey(name);
+
+        public IArtefact GetArtefact(string name)
+            => _knownArtefacts[name];
 
         public IPeer GetPeer(string name)
             => name == Name ? Self
@@ -114,9 +130,18 @@ namespace Trustcoin.Core.Entities
                 SyncPeer(totalTrust, kvp.Key, kvp.Value);
         }
 
-        public void CreateArtefact(string name)
+        public IArtefact CreateArtefact(string name)
         {
-            OnCreatedArtefact(new Artefact(name));
+            var artefact = new Artefact(name, Name);
+            OnCreatedArtefact(artefact);
+            return artefact;
+        }
+
+        public void DestroyArtefact(string name)
+        {
+            if (!KnowsArtefact(name) || GetArtefact(name).OwnerName != Name)
+                throw new ArgumentException("Tried to destroy artefact not owned");
+            OnDestroyArtefact(GetArtefact(name));
         }
 
         public bool Update(string subjectName, ISignedAction signedAction)
@@ -127,6 +152,26 @@ namespace Trustcoin.Core.Entities
             _cryptography.VerifySignature(signedAction, peer);
             UpdatePeer(peer, signedAction.Action);
             return true;
+        }
+
+        public IDictionary<string, Money> RequestUpdate(string[] subjectNames)
+        {
+            var requestedPeers = Peers.Select(p => p.Name)
+                .Intersect(subjectNames)
+            .Select(GetPeer)
+            .ToArray();
+            return requestedPeers.ToDictionary(p => p.Name, p => p.Money);
+        }
+
+        private IPeer CreateSelf()
+        {
+            var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
+            {
+                Trust = SignedWeight.Max,
+                IsEndorced = true
+            };
+            self.AddRelation(self);
+            return self;
         }
 
         private void SyncPeer(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
@@ -150,16 +195,6 @@ namespace Trustcoin.Core.Entities
                 peer.Name,
                 peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray());
 
-
-        public IDictionary<string, Money> RequestUpdate(string[] subjectNames)
-        {
-            var requestedPeers = Peers.Select(p => p.Name)
-                .Intersect(subjectNames)
-            .Select(GetPeer)
-            .ToArray();
-            return requestedPeers.ToDictionary(p => p.Name, p => p.Money);
-        }
-
         private void UpdatePeer(IPeer peer, IAction action)
         {
             switch (action)
@@ -175,6 +210,12 @@ namespace Trustcoin.Core.Entities
                     break;
                 case CreateArtefactAction caa:
                     WhenCreateArtefact(peer, caa);
+                    break;
+                case DestroyArtefactAction daa:
+                    WhenDestroyArtefact(peer, daa);
+                    break;
+                case EndorceArtefactAction daa:
+                    WhenEndorceArtefact(peer, daa);
                     break;
                 case NoAction _:
                     break;
@@ -205,23 +246,80 @@ namespace Trustcoin.Core.Entities
                 relation = peer.AddRelation(_network.FindAgent(ea.AgentName));
             else if (relation.IsEndorced)
             {
-                peer.DecreaseTrust(DoubleEndorceDecreaseTrustWeight);
+                peer.DecreaseTrust(DoubleEndorceFactor);
                 return;
             }
             AddMoneyFromEndorcement(peer, relation);
             relation.IsEndorced = true;
         }
 
-        private void WhenCreateArtefact(IPeer peer, CreateArtefactAction action)
+        private void WhenEndorceArtefact(IPeer peer, ArtefactAction action)
+        {
+            var artefact = action.Artefact;
+            if (KnowsArtefact(action.Artefact.Name)) {
+                var knownArtefact = GetArtefact(artefact.Name);
+                if (knownArtefact.OwnerName != artefact.OwnerName) {
+                    // reduce trust
+                    return;
+                }
+                if (artefact.IsEndorcedBy(peer.Name)) {
+                    // reduce trust
+                    return;
+                }
+                artefact = knownArtefact;
+            }
+            else 
+            _knownArtefacts.Add(artefact.Name, artefact);
+
+            var relation = ProduceRelation(peer, artefact.OwnerName);
+            AddMoneyFromEndorcement(peer, relation, 0.001f);
+            artefact.AddEndorcer(peer);
+        }
+
+        private Relation ProduceRelation(IPeer source, string targetName)
+        {
+            var relation = source.GetRelation(targetName);
+            return relation.IsConnected
+                ? relation
+                : source.AddRelation(_network.FindAgent(targetName));
+        }
+
+        private void WhenCreateArtefact(IPeer peer, ArtefactAction action)
         {
             if (peer.HasArtefact(action.Artefact.Name))
                 return;
-            peer.AddArtefact(action.Artefact);
+            if (OtherPeerHasArtefact(action.Artefact.Name))
+                peer.DecreaseTrust(CounterfeitArtefactFactor);
+            else
+                AddArtefact(peer, action.Artefact);
         }
 
-        private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation)
+        private void WhenDestroyArtefact(IPeer peer, ArtefactAction action)
         {
-            var addedMoney = (2 * endorcer.Trust - 1) * (1 - (float)relation.Weight);
+            if (peer.HasArtefact(action.Artefact.Name))
+                DestroyArtefact(peer, action.Artefact);
+            else
+                peer.DecreaseTrust(DestroyOthersArtefactFactor);
+        }
+
+        private bool OtherPeerHasArtefact(string name)
+            => _knownArtefacts.ContainsKey(name);
+
+        private void AddArtefact(IPeer peer, IArtefact artefact)
+        {
+            peer.AddArtefact(artefact);
+            _knownArtefacts.Add(artefact.Name, artefact);
+        }
+
+        private void DestroyArtefact(IPeer peer, IArtefact artefact)
+        {
+            peer.RemoveArtefact(artefact);
+            _knownArtefacts.Remove(artefact.Name);
+        }
+
+        private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation, float factor = 1)
+        {
+            var addedMoney = factor * endorcer.Trust * (1 - (float)relation.Weight);
             if (addedMoney <= 0) return;
             var endorcedPeer = ProducePeer(relation.Agent.Name);
             endorcedPeer.Money += (Money)addedMoney;
@@ -248,6 +346,16 @@ namespace Trustcoin.Core.Entities
         private void OnCreatedArtefact(IArtefact artefact)
         {
             SendAction(new CreateArtefactAction(artefact));
+        }
+
+        private void OnDestroyArtefact(IArtefact artefact)
+        {
+            SendAction(new DestroyArtefactAction(artefact));
+        }
+
+        private void OnEndorcedArtefact(IArtefact artefact)
+        {
+            SendAction(new EndorceArtefactAction(artefact));
         }
 
         private void SendAction(IAction action)

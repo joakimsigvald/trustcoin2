@@ -38,16 +38,13 @@ namespace Trustcoin.Core.Test
         }
 
         [Theory]
-        [InlineData(0, 1, 0, 1)]
-        [InlineData(0, 0.75, 0, 0.5)]
-        [InlineData(0, 0.5, 0, 0)]
-        [InlineData(0, 0.25, 0, 0)]
-        [InlineData(0, 1, 0.5, 0.5)]
-        [InlineData(0, 0.75, 0.5, 0.25)]
-        [InlineData(1, 1, 0, 2)]
-        [InlineData(2, 0.75, 0.5, 2.25)]
+        [InlineData(1, 0, 1)]
+        [InlineData(1, 0.5, 0.5)]
+        [InlineData(0.5, 0, 0.5)]
+        [InlineData(0.5, 0.5, 0.25)]
+        [InlineData(0, 0, 0)]
+        [InlineData(-0.5, 0, 0)]
         public void AfterOnePeerEndorceAnotherPeer_EndorcedPeerIncreaseMoney(
-            float initialMoney,
             float trustForEndorcingPeer,
             float relationOfEndorcingPeerToEndorcedPeer,
             float expectedIncrease)
@@ -55,23 +52,20 @@ namespace Trustcoin.Core.Test
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
-            MyAccount.SetMoney(ThirdAccountName, (Money)initialMoney);
 
             OtherAccount.Endorce(ThirdAccountName);
-            Assert.Equal(expectedIncrease, MyAccount.GetPeer(ThirdAccountName).Money);
+
+            Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
         }
 
         [Theory]
-        [InlineData(0, 1, 0, 1)]
-        [InlineData(0, 0.75, 0, 0.5)]
-        [InlineData(0, 0.5, 0, 0)]
-        [InlineData(0, 0.25, 0, 0)]
-        [InlineData(0, 1, 0.5, 0.5)]
-        [InlineData(0, 0.75, 0.5, 0.25)]
-        [InlineData(1, 1, 0, 2)]
-        [InlineData(2, 0.75, 0.5, 2.25)]
+        [InlineData(1, 0, 1)]
+        [InlineData(1, 0.5, 0.5)]
+        [InlineData(0.5, 0, 0.5)]
+        [InlineData(0.5, 0.5, 0.25)]
+        [InlineData(0, 0, 0)]
+        [InlineData(-0.5, 0, 0)]
         public void AfterPeerEndorcedMe_MyMoneyIncrease(
-            float initialMoney,
             float trustForEndorcingPeer,
             float relationOfEndorcingPeerToEndorcedPeer,
             float expectedIncrease)
@@ -79,7 +73,6 @@ namespace Trustcoin.Core.Test
             Interconnect(MyAccount, OtherAccount);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, MyAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
-            MyAccount.SetMoney(MyAccountName, (Money)initialMoney);
 
             OtherAccount.Endorce(MyAccountName);
             Assert.Equal(expectedIncrease, MyAccount.Self.Money);

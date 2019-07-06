@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Trustcoin.Core.Exceptions;
 using Trustcoin.Core.Types;
 using static Trustcoin.Core.Entities.Constants;
@@ -28,7 +29,14 @@ namespace Trustcoin.Core.Entities
         {
             if (HasArtefact(artefact.Name))
                 throw new DuplicateKey<string>(artefact.Name);
+            if (artefact.OwnerName != Name)
+                throw new ArgumentException("Cannot add artefact with othe owner");
             _artefacts.Add(artefact.Name, artefact);
+        }
+
+        public void RemoveArtefact(IArtefact artefact)
+        {
+            _artefacts.Remove(artefact.Name);
         }
 
         public bool HasArtefact(string name)

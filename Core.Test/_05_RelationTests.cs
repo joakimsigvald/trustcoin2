@@ -116,7 +116,7 @@ namespace Trustcoin.Core.Test
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
             MyAccount.Endorce(ThirdAccountName);
             var trustBefore = OtherAccount.GetTrust(MyAccountName);
-            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceDecreaseTrustWeight);
+            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceFactor);
 
             MyAccount.Endorce(ThirdAccountName);
 

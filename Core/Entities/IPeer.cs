@@ -15,5 +15,6 @@ namespace Trustcoin.Core.Entities
         void AddArtefact(IArtefact artefact);
         bool HasArtefact(string artefactName);
         IArtefact GetArtefact(string artefactName);
+        void RemoveArtefact(IArtefact artefact);
     }
 }

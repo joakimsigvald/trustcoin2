@@ -4,9 +4,9 @@ using Trustcoin.Core.Entities;
 namespace Trustcoin.Core.Actions
 {
     [Serializable]
-    public class CreateArtefactAction : ArtefactAction
+    public class EndorceArtefactAction : ArtefactAction
     {
-        public CreateArtefactAction(IArtefact artefact) : base(artefact)
+        public EndorceArtefactAction(IArtefact artefact) : base(artefact)
         {
         }
     }
