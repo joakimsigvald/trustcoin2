@@ -143,61 +143,31 @@ namespace Trustcoin.Core.Test
             Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
         }
 
-        /*
-        [Theory]
-        [InlineData(0, 1, 0, 1)]
-        [InlineData(0, 0.75, 0, 0.5)]
-        [InlineData(0, 0.5, 0, 0)]
-        [InlineData(0, 0.25, 0, 0)]
-        [InlineData(0, 1, 0.5, 0.5)]
-        [InlineData(0, 0.75, 0.5, 0.25)]
-        [InlineData(1, 1, 0, 2)]
-        [InlineData(2, 0.75, 0.5, 2.25)]
-        public void AfterPeerEndorcedMe_MyMoneyIncrease(
-            float initialMoney,
-            float trustForEndorcingPeer,
-            float relationOfEndorcingPeerToEndorcedPeer,
-            float expectedIncrease)
+        [Fact]
+        public void AfterEndorcedArtefact_TrustOfOwnerIncrease()
         {
             Interconnect(MyAccount, OtherAccount);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
-            MyAccount.SetRelationWeight(OtherAccountName, MyAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
-            MyAccount.SetMoney(MyAccountName, (Money)initialMoney);
+            var artefact = OtherAccount.CreateArtefact(ArtefactName);
+            var trustBefore = MyAccount.GetTrust(OtherAccountName);
 
-            OtherAccount.Endorce(MyAccountName);
-            Assert.Equal(expectedIncrease, MyAccount.Self.Money);
+            MyAccount.EndorceArtefact(artefact);
+
+            var expectedTrust = trustBefore.Increase(ArtefactEndorcementFactor);
+
+            Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
         }
 
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.5)]
-        [InlineData(-0.5)]
-        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
+        [Fact]
+        public void WhenEndorceEndorcedArtefact_TrustOfOwnerIsUnchanged()
         {
-            var trustBefore = (SignedWeight)trustValueBefore;
-            MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
+            Interconnect(MyAccount, OtherAccount);
+            var artefact = OtherAccount.CreateArtefact(ArtefactName);
+            MyAccount.EndorceArtefact(artefact);
+            var trustBefore = MyAccount.GetTrust(OtherAccountName);
 
-            MyAccount.Endorce(OtherAccountName);
-
-            Assert.Equal(trustBefore.Increase(EndorcementFactor), MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.5)]
-        [InlineData(-0.5)]
-        public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustValueBefore)
-        {
-            var trustBefore = (SignedWeight)trustValueBefore;
-            MyAccount.Endorce(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-
-            MyAccount.Endorce(OtherAccountName);
+            MyAccount.EndorceArtefact(artefact);
 
             Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
         }
-
-        */
     }
 }

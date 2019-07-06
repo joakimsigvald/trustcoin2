@@ -6,6 +6,7 @@ namespace Trustcoin.Core.Entities
     {
         public static readonly SignedWeight BaseTrust = (SignedWeight)0f;
         public static readonly Weight EndorcementFactor = (Weight)1f;
+        public static readonly Weight ArtefactEndorcementFactor = (Weight)0.01f;
         public static readonly Weight BaseRelationWeight = (Weight)0.1f;
         public static readonly Weight DoubleEndorceFactor = (Weight)0.1f;
         public static readonly Weight CounterfeitArtefactFactor = (Weight)0.5f;

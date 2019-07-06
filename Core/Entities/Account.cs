@@ -66,6 +66,7 @@ namespace Trustcoin.Core.Entities
             }
             else
                 _knownArtefacts.Add(artefact.Name, artefact);
+            IncreaseTrust(owner.Name, ArtefactEndorcementFactor);
             OnEndorcedArtefact(artefact);
         }
 
@@ -256,20 +257,23 @@ namespace Trustcoin.Core.Entities
         private void WhenEndorceArtefact(IPeer peer, ArtefactAction action)
         {
             var artefact = action.Artefact;
-            if (KnowsArtefact(action.Artefact.Name)) {
+            if (KnowsArtefact(action.Artefact.Name))
+            {
                 var knownArtefact = GetArtefact(artefact.Name);
-                if (knownArtefact.OwnerName != artefact.OwnerName) {
+                if (knownArtefact.OwnerName != artefact.OwnerName)
+                {
                     // reduce trust
                     return;
                 }
-                if (artefact.IsEndorcedBy(peer.Name)) {
+                if (artefact.IsEndorcedBy(peer.Name))
+                {
                     // reduce trust
                     return;
                 }
                 artefact = knownArtefact;
             }
-            else 
-            _knownArtefacts.Add(artefact.Name, artefact);
+            else
+                _knownArtefacts.Add(artefact.Name, artefact);
 
             var relation = ProduceRelation(peer, artefact.OwnerName);
             AddMoneyFromEndorcement(peer, relation, 0.001f);
