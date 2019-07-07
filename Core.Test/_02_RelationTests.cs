@@ -1,6 +1,5 @@
 using Trustcoin.Core.Types;
 using Xunit;
-using static Trustcoin.Core.Entities.Constants;
 
 namespace Trustcoin.Core.Test
 {
@@ -61,17 +60,6 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterPeerEndorceMe_IAmUpdatedOfEndorcement()
-        {
-            MyAccount.Connect(OtherAccountName);
-            OtherAccount.Connect(MyAccountName);
-
-            OtherAccount.Endorce(MyAccountName);
-
-            Assert.True(MyAccount.GetPeer(OtherAccountName).Endorces(MyAccountName));
-        }
-
-        [Fact]
         public void AfterInterconnectedAgents_RelationStrengthsAre_Zero()
         {
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
@@ -90,33 +78,6 @@ namespace Trustcoin.Core.Test
             Assert.Equal(0f, thirdToOther.Strength);
         }
 
-        [Fact]
-        public void AfterEndorcedUnconnectedAgent_RelationIsIncreaseWithEndorcementFactor()
-        {
-            Interconnect(MyAccount, OtherAccount);
-
-            OtherAccount.Endorce(ThirdAccountName);
-
-            var expectedRelationWeight = Weight.Min.Increase(EndorcementTrustFactor);
-            var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Strength;
-            Assert.Equal(expectedRelationWeight, actualRelationWeight);
-        }
-
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.3)]
-        [InlineData(0.6)]
-        public void AfterEndorcedConnectedAgent_RelationIsIncreaseWithEndorcementFactor(float initialRelation)
-        {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)initialRelation);
-
-            OtherAccount.Endorce(ThirdAccountName);
-
-            var expectedRelationWeight = ((Weight)initialRelation).Increase(EndorcementTrustFactor);
-            var actualRelationWeight = MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName);
-            Assert.Equal(expectedRelationWeight, actualRelationWeight);
-        }
 
         [Theory]
         [InlineData(0.3)]

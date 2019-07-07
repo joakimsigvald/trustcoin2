@@ -37,6 +37,7 @@ namespace Trustcoin.Core.Entities
                 return GetPeer(name);
             var newPeer = _network.FindAgent(name).AsPeer();
             _peers[name] = newPeer;
+            SyncPeer(newPeer);
             OnAddedConnection(name);
             return newPeer;
         }
@@ -125,8 +126,17 @@ namespace Trustcoin.Core.Entities
 
         public void SyncAll()
         {
+            Sync(Peers.Select(peer => peer.Name).ToArray());
+        }
+
+        private void SyncPeer(IPeer peer)
+        {
+            Sync(new[] { peer.Name });
+        }
+
+        private void Sync(string[] peersToUpdate)
+        {
             var totalTrust = Peers.Sum(p => p.Trust);
-            string[] peersToUpdate = Peers.Select(peer => peer.Name).ToArray();
             var peerAssessments = TrustedPeers
                 .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate))
                 .SelectMany(x => x.Value.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))

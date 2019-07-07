@@ -1,7 +1,6 @@
 using Trustcoin.Core.Exceptions;
 using Trustcoin.Core.Types;
 using Xunit;
-using static Trustcoin.Core.Entities.Constants;
 
 namespace Trustcoin.Core.Test
 {
@@ -97,53 +96,10 @@ namespace Trustcoin.Core.Test
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherAccountName, (Weight)factor));
         }
 
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.5)]
-        [InlineData(-0.5)]
-        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
-        {
-            var trustBefore = (SignedWeight)trustValueBefore;
-            MyAccount.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-
-            MyAccount.Endorce(OtherAccountName);
-
-            Assert.Equal(trustBefore.Increase(EndorcementTrustFactor), MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.5)]
-        [InlineData(-0.5)]
-        public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustValueBefore)
-        {
-            var trustBefore = (SignedWeight)trustValueBefore;
-            MyAccount.Endorce(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-
-            MyAccount.Endorce(OtherAccountName);
-
-            Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
-        }
-
         [Fact]
         public void Account_TrustForSelfIsMax()
         {
             Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
-        }
-
-        [Fact]
-        public void When_I_EndorcePeerTwice_Then_I_LooseTrust()
-        {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.Endorce(ThirdAccountName);
-            var trustBefore = OtherAccount.GetTrust(MyAccountName);
-            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceDistrustFactor);
-
-            MyAccount.Endorce(ThirdAccountName);
-
-            Assert.Equal(expectedTrustAfter, OtherAccount.GetTrust(MyAccountName));
         }
     }
 }

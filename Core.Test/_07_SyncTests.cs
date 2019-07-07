@@ -143,5 +143,18 @@ namespace Trustcoin.Core.Test
 
             Assert.Equal(peerMoneyAfter, MyAccount.GetMoney(peerToUpdate.Name));
         }
+
+        [Fact]
+        public void WhenConnectPeer_PeerIsSynced()
+        {
+            Interconnect(MyAccount, OtherAccount);
+            Interconnect(ThirdAccount, OtherAccount);
+            OtherAccount.SetMoney(ThirdAccountName, (Money)100);
+            MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
+
+            MyAccount.Connect(ThirdAccountName);
+
+            Assert.Equal((Money)50, MyAccount.GetMoney(ThirdAccountName));
+        }
     }
 }
