@@ -22,7 +22,7 @@ namespace Trustcoin.Core.Entities
         {
             if (IsEndorced) return;
             IsEndorced = true;
-            Trust = Trust.Increase(EndorcementFactor);
+            Trust = Trust.Increase(EndorcementTrustFactor);
         }
 
         public void AddArtefact(IArtefact artefact)

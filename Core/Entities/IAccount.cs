@@ -29,6 +29,8 @@ namespace Trustcoin.Core.Entities
         void SetRelationWeight(string subjectName, string objectName, Weight value);
         Money GetMoney(string name);
         void SetMoney(string name, Money money);
+        IArtefact GetArtefact(string name);
+        void ForgetArtefact(string name);
         void DestroyArtefact(string artefactName);
         void EndorceArtefact(IArtefact artefact);
         bool EndorcesArtefact(string name, string artefactName);

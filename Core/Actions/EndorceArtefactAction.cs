@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using Trustcoin.Core.Entities;
 
 namespace Trustcoin.Core.Actions
@@ -7,6 +8,11 @@ namespace Trustcoin.Core.Actions
     public class EndorceArtefactAction : ArtefactAction
     {
         public EndorceArtefactAction(IArtefact artefact) : base(artefact)
+        {
+        }
+
+        protected EndorceArtefactAction(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
     }

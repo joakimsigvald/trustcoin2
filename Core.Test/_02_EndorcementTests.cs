@@ -25,5 +25,11 @@ namespace Trustcoin.Core.Test
             MyAccount.Endorce(OtherAccountName);
             Assert.True(MyAccount.Self.Endorces(OtherAccountName));
         }
+
+        [Fact]
+        public void Self_IsEndorced()
+        {
+            Assert.True(MyAccount.Self.IsEndorced);
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Trustcoin.Core.Cryptography
+﻿using System.Runtime.Serialization;
+
+namespace Trustcoin.Core.Cryptography
 {
     public interface ISignature
     {

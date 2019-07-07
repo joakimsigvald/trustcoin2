@@ -15,14 +15,14 @@ namespace Trustcoin.Core.Cryptography
             RenewKeys();
         }
 
-        public ISignedAction Sign(IAction action) => new SignedAction
+        public SignedAction Sign(IAction action) => new SignedAction
         {
             Action = action,
             Signature = new RsaSignature(action.Serialize(), _rsa),
             OldSignature = new RsaSignature(action.Serialize(), _oldRsa)
         };
 
-        public void VerifySignature(ISignedAction action, IPeer peer)
+        public void VerifySignature(SignedAction action, IPeer peer)
         {
             if (!action.Signature.Verify(action.Action.Serialize(), peer.PublicKey)
                 && !action.OldSignature.Verify(action.Action.Serialize(), peer.PublicKey))

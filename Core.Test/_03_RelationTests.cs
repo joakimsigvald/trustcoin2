@@ -1,4 +1,3 @@
-using System;
 using Trustcoin.Core.Types;
 using Xunit;
 using static Trustcoin.Core.Entities.Constants;
@@ -7,6 +6,26 @@ namespace Trustcoin.Core.Test
 {
     public class RelationTests : TestBase
     {
+        [Fact]
+        public void SelfIsConnectedToSelf()
+        {
+            Assert.True(MyAccount.IsConnectedTo(MyAccountName));
+            Assert.True(MyAccount.Self.IsConnectedTo(MyAccountName));
+        }
+
+        [Fact]
+        public void SelfHasMaxRelationToSelf()
+        {
+            Assert.Equal((Weight)1, MyAccount.Self.GetRelation(MyAccount.Name).Strength);
+        }
+
+        [Fact]
+        public void WhenConnectAgent_ItBecomesPeer()
+        {
+            MyAccount.Connect(OtherAccountName);
+            Assert.NotNull(MyAccount.GetPeer(OtherAccountName));
+        }
+
         [Fact]
         public void AfterIConnectWithAgent_IAmConnectedToAgent()
         {
@@ -53,7 +72,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterInterconnectedAgents_RelationsAre_BaseRelation()
+        public void AfterInterconnectedAgents_RelationStrengthsAre_Zero()
         {
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
             var otherToMe = MyAccount.GetPeer(OtherAccountName)
@@ -65,33 +84,22 @@ namespace Trustcoin.Core.Test
             var thirdToOther = MyAccount.GetPeer(ThirdAccountName)
                 .GetRelation(OtherAccountName);
 
-            Assert.Equal(BaseRelationWeight, otherToMe.Weight);
-            Assert.Equal(BaseRelationWeight, thirdToMe.Weight);
-            Assert.Equal(BaseRelationWeight, otherToThird.Weight);
-            Assert.Equal(BaseRelationWeight, thirdToOther.Weight);
+            Assert.Equal(0f, otherToMe.Strength);
+            Assert.Equal(0f, thirdToMe.Strength);
+            Assert.Equal(0f, otherToThird.Strength);
+            Assert.Equal(0f, thirdToOther.Strength);
         }
 
         [Fact]
-        public void AfterEndorcedUnconnectedAgent_RelationIsBaseWeightIncreaseWithEndorcementFactor()
+        public void AfterEndorcedUnconnectedAgent_RelationIsIncreaseWithEndorcementFactor()
         {
             Interconnect(MyAccount, OtherAccount);
 
             OtherAccount.Endorce(ThirdAccountName);
 
-            var expectedRelationWeight = BaseRelationWeight.Increase(EndorcementFactor);
-            var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Weight;
+            var expectedRelationWeight = Weight.Min.Increase(EndorcementTrustFactor);
+            var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Strength;
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
-        }
-
-        [Theory]
-        [InlineData(0.3)]
-        [InlineData(0.7)]
-        public void AccountCanSetAndGetRelationWeightForPeers(float setWeight)
-        {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)setWeight);
-
-            Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName));
         }
 
         [Theory]
@@ -105,22 +113,20 @@ namespace Trustcoin.Core.Test
 
             OtherAccount.Endorce(ThirdAccountName);
 
-            var expectedRelationWeight = ((Weight)initialRelation).Increase(EndorcementFactor);
+            var expectedRelationWeight = ((Weight)initialRelation).Increase(EndorcementTrustFactor);
             var actualRelationWeight = MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName);
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
 
-        [Fact]
-        public void When_I_EndorcePeerTwice_Then_I_LooseTrust()
+        [Theory]
+        [InlineData(0.3)]
+        [InlineData(0.7)]
+        public void AccountCanSetAndGetRelationWeightForPeers(float setWeight)
         {
             Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.Endorce(ThirdAccountName);
-            var trustBefore = OtherAccount.GetTrust(MyAccountName);
-            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceFactor);
+            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)setWeight);
 
-            MyAccount.Endorce(ThirdAccountName);
-
-            Assert.Equal(expectedTrustAfter, OtherAccount.GetTrust(MyAccountName));
+            Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName));
         }
     }
 }

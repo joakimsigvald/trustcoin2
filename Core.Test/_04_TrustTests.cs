@@ -11,7 +11,7 @@ namespace Trustcoin.Core.Test
         public void AfterConnectedAgent_TrustIs_BaseTrust()
         {
             MyAccount.Connect(OtherAccountName);
-            Assert.Equal(BaseTrust, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(0f, MyAccount.GetTrust(OtherAccountName));
         }
 
         [Fact]
@@ -109,7 +109,7 @@ namespace Trustcoin.Core.Test
 
             MyAccount.Endorce(OtherAccountName);
 
-            Assert.Equal(trustBefore.Increase(EndorcementFactor), MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(trustBefore.Increase(EndorcementTrustFactor), MyAccount.GetTrust(OtherAccountName));
         }
 
         [Theory]
@@ -125,6 +125,25 @@ namespace Trustcoin.Core.Test
             MyAccount.Endorce(OtherAccountName);
 
             Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
+        }
+
+        [Fact]
+        public void Account_TrustForSelfIsMax()
+        {
+            Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
+        }
+
+        [Fact]
+        public void When_I_EndorcePeerTwice_Then_I_LooseTrust()
+        {
+            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            MyAccount.Endorce(ThirdAccountName);
+            var trustBefore = OtherAccount.GetTrust(MyAccountName);
+            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceDistrustFactor);
+
+            MyAccount.Endorce(ThirdAccountName);
+
+            Assert.Equal(expectedTrustAfter, OtherAccount.GetTrust(MyAccountName));
         }
     }
 }

@@ -16,6 +16,18 @@ namespace Trustcoin.Core.Actions
                 throw new System.ArgumentNullException("info");
         }
 
+        public IAction Clone()
+        {
+            IFormatter formatter = new BinaryFormatter();
+            MemoryStream ms = new MemoryStream();
+            formatter.Serialize(ms, this);
+            //ms.Flush();
+            ms.Seek(0, 0);
+            //ms.Close();
+            //MemoryStream rs = new MemoryStream();
+            return (IAction)formatter.Deserialize(ms);
+        }
+
         public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
@@ -26,10 +27,10 @@ namespace Trustcoin.Core.Infrastructure
             return targetClient.RequestUpdate(subjectNames);
         }
 
-        public bool SendAction(string targetName, string subjectName, ISignedAction action)
+        public bool SendAction(string targetName, string subjectName, SignedAction action)
         {
             var targetClient = GetClient(targetName);
-            return targetClient.Update(subjectName, action);
+            return targetClient.Update(subjectName, action.Clone());
         }
 
         private IClient GetClient(string name)

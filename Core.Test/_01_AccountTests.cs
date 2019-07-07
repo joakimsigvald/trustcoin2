@@ -1,13 +1,15 @@
 using Trustcoin.Core.Cryptography;
+using Trustcoin.Core.Entities;
+using Trustcoin.Core.Exceptions;
 using Xunit;
 
 namespace Trustcoin.Core.Test
 {
-    public class NetworkTests : TestBase
+    public class AccountTests : TestBase
     {
         private static readonly SimpleCryptographyFactory _cryptographyFactory = new SimpleCryptographyFactory();
 
-        public NetworkTests() : base(_cryptographyFactory) { }
+        public AccountTests() : base(_cryptographyFactory) { }
 
         [Fact]
         public void CanFindAgentByName()
@@ -30,6 +32,25 @@ namespace Trustcoin.Core.Test
             Assert.Null(_network.FindAgent(accountName));
             _network.CreateAccount(accountName);
             Assert.NotNull(_network.FindAgent(accountName));
+        }
+        [Fact]
+        public void Account_Self_IsSameAsAccount()
+        {
+            Assert.Equal(MyAccount.Name, MyAccount.Self.Name);
+        }
+
+        [Fact]
+        public void CanGetSelfByName()
+        {
+            Assert.NotNull(MyAccount.GetPeer(MyAccountName));
+        }
+
+        [Fact]
+        public void WhenTryGetNonExistingPeer_ThrowsNotFoundPeer()
+        {
+            var name = "XXX";
+            var ex = Assert.Throws<NotFound<IPeer>>(() => MyAccount.GetPeer(name));
+            Assert.Equal(name, ex.ParamName);
         }
     }
 }

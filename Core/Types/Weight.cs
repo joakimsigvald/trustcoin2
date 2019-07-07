@@ -8,6 +8,7 @@ namespace Trustcoin.Core.Types
         private readonly float _value;
 
         public static readonly Weight Max = (Weight)1f;
+        public static readonly Weight Min = (Weight)0f;
 
         public Weight(float value)
         {

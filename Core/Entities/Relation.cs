@@ -5,19 +5,13 @@ namespace Trustcoin.Core.Entities
 {
     public class Relation
     {
-        public Relation(IAgent agent) : this(agent, BaseRelationWeight)
-        {
-        }
-
-        public Relation(IAgent agent, Weight weight)
+        public Relation(IAgent agent)
         {
             Agent = agent;
-            Weight = weight;
         }
 
         public IAgent Agent { get; }
-        public Weight Weight { get; set; }
-        public bool IsConnected => Agent != null;
+        public Weight Strength { get; set; }
 
         public bool IsEndorced
         {
@@ -26,10 +20,15 @@ namespace Trustcoin.Core.Entities
             {
                 if (IsEndorced) return;
                 Agent.IsEndorced = true;
-                Weight = Weight.Increase(EndorcementFactor);
+                IncreaseStrength(EndorcementTrustFactor);
             }
         }
 
-        public override string ToString() => $"{Agent}: {Weight}";
+        public void IncreaseStrength(Weight factor)
+        {
+            Strength = Strength.Increase(factor);
+        }
+
+        public override string ToString() => $"{Agent}: {Strength}";
     }
 }

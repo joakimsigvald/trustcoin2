@@ -4,12 +4,14 @@ namespace Trustcoin.Core.Entities
 {
     public static class Constants
     {
-        public static readonly SignedWeight BaseTrust = (SignedWeight)0f;
-        public static readonly Weight EndorcementFactor = (Weight)1f;
-        public static readonly Weight ArtefactEndorcementFactor = (Weight)0.01f;
-        public static readonly Weight BaseRelationWeight = (Weight)0.1f;
-        public static readonly Weight DoubleEndorceFactor = (Weight)0.1f;
-        public static readonly Weight CounterfeitArtefactFactor = (Weight)0.5f;
-        public static readonly Weight DestroyOthersArtefactFactor = (Weight)0.2f;
+        public static readonly Weight EndorcementTrustFactor = (Weight)1f;
+        public static readonly Weight ArtefactEndorcementTrustFactor = (Weight)0.01f;
+        public static readonly Weight DoubleEndorceDistrustFactor = (Weight)0.1f;
+        public static readonly Weight DoubleEndorceArtefactDistrustFactor = (Weight)0.01f;
+        public static readonly Weight CounterfeitArtefactDistrustFactor = (Weight)0.5f;
+        public static readonly Weight EndorceCounterfeitArtefactDistrustFactor = (Weight)0.1f;
+        public static readonly Weight DestroyOthersArtefactDistrustFactor = (Weight)0.2f;
+
+        public const float ArtefactMoneyFactor = 0.001f;
     }
 }

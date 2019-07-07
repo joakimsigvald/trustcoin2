@@ -23,10 +23,7 @@ namespace Trustcoin.Core.Entities
 
 
         public IPeer AsPeer()
-            => new Peer(Name, PublicKey, Relations)
-            {
-                Trust = BaseTrust,
-            };
+            => new Peer(Name, PublicKey, Relations);
 
         public IAgent Clone()
             => new Agent(Name, PublicKey, Relations)

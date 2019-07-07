@@ -20,6 +20,11 @@ namespace Trustcoin.Core.Entities
             _endorcers.Add(peer.Name, peer);
         }
 
+        public void RemoveEndorcer(IAgent peer)
+        {
+            _endorcers.Remove(peer.Name);
+        }
+
         public bool IsEndorcedBy(string agentName)
             => _endorcers.ContainsKey(agentName);
     }
