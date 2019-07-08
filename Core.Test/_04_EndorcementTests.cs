@@ -14,27 +14,6 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void WhenEndorceAgent_PeerIsEndorced()
-        {
-            MyAccount.Endorce(OtherAccountName);
-            Assert.True(MyAccount.Self.Endorces(OtherAccountName));
-        }
-
-        [Fact]
-        public void WhenEndorceEndorcedPeer_PeerIsStillEndorced()
-        {
-            MyAccount.Endorce(OtherAccountName);
-            MyAccount.Endorce(OtherAccountName);
-            Assert.True(MyAccount.Self.Endorces(OtherAccountName));
-        }
-
-        [Fact]
-        public void Self_IsEndorced()
-        {
-            Assert.True(MyAccount.Self.IsEndorced);
-        }
-
-        [Fact]
         public void AfterEndorcedUnconnectedAgent_RelationIsIncreaseWithEndorcementFactor()
         {
             Interconnect(MyAccount, OtherAccount);
@@ -62,17 +41,6 @@ namespace Trustcoin.Core.Test
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
 
-        [Fact]
-        public void AfterPeerEndorceMe_IAmUpdatedOfEndorcement()
-        {
-            MyAccount.Connect(OtherAccountName);
-            OtherAccount.Connect(MyAccountName);
-
-            OtherAccount.Endorce(MyAccountName);
-
-            Assert.True(MyAccount.GetPeer(OtherAccountName).Endorces(MyAccountName));
-        }
-
         [Theory]
         [InlineData(0.1)]
         [InlineData(0.5)]
@@ -86,34 +54,6 @@ namespace Trustcoin.Core.Test
             MyAccount.Endorce(OtherAccountName);
 
             Assert.Equal(trustBefore.Increase(EndorcementTrustFactor), MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Theory]
-        [InlineData(0.1)]
-        [InlineData(0.5)]
-        [InlineData(-0.5)]
-        public void WhenEndorceEndorcedPeer_TrustIsUnchanged(float trustValueBefore)
-        {
-            var trustBefore = (SignedWeight)trustValueBefore;
-            MyAccount.Endorce(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-
-            MyAccount.Endorce(OtherAccountName);
-
-            Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Fact]
-        public void When_I_EndorcePeerTwice_Then_I_LooseTrust()
-        {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.Endorce(ThirdAccountName);
-            var trustBefore = OtherAccount.GetTrust(MyAccountName);
-            var expectedTrustAfter = trustBefore.Decrease(DoubleEndorceDistrustFactor);
-
-            MyAccount.Endorce(ThirdAccountName);
-
-            Assert.Equal(expectedTrustAfter, OtherAccount.GetTrust(MyAccountName));
         }
     }
 }

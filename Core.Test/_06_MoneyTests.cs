@@ -77,5 +77,15 @@ namespace Trustcoin.Core.Test
             OtherAccount.Endorce(MyAccountName);
             Assert.Equal(expectedIncrease, MyAccount.Self.Money);
         }
+
+        [Fact]
+        public void WhenEndorcePeerManyTimes_MoneyIncreaseLessThanTwo()
+        {
+            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
+            for (int i = 0; i < 10; i++)
+                OtherAccount.Endorce(ThirdAccountName);
+            Assert.InRange((float)MyAccount.GetMoney(ThirdAccountName), 0, 2);
+        }
     }
 }

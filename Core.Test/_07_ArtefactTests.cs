@@ -74,34 +74,15 @@ namespace Trustcoin.Core.Test
             Assert.True(ThirdAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
         }
 
-        //Endorcement
-
-        [Fact]
-        public void WhenEndorceArtefact_ArtefactIsEndorced()
-        {
-            var artefact = OtherAccount.CreateArtefact(ArtefactName);
-            MyAccount.EndorceArtefact(artefact);
-            Assert.True(MyAccount.EndorcesArtefact(MyAccount.Name, artefact.Name));
-        }
-
-        [Fact]
-        public void WhenEndorceEndorcedArtefact_ArtefactIsStillEndorced()
-        {
-            var artefact = OtherAccount.CreateArtefact(ArtefactName);
-            MyAccount.EndorceArtefact(artefact);
-            MyAccount.EndorceArtefact(artefact);
-            Assert.True(MyAccount.EndorcesArtefact(MyAccount.Name, ArtefactName));
-        }
-
         //Money
 
         [Theory]
-        [InlineData(1, 0, 0.001)]
-        [InlineData(0.5, 0, 0.0005)]
+        [InlineData(1, 0, 0.01)]
+        [InlineData(0.5, 0, 0.005)]
         [InlineData(0, 0, 0)]
         [InlineData(-0.5, 0, 0)]
-        [InlineData(1, 0.5, 0.0005)]
-        [InlineData(0.5, 0.5, 0.00025)]
+        [InlineData(1, 0.5, 0.005)]
+        [InlineData(0.5, 0.5, 0.0025)]
         public void AfterPeerEndorceArtefact_ArtefactOwnerIncreaseMoney(
             float trustForEndorcingPeer,
             float relationOfEndorcingPeerToEndorcedPeer,
@@ -115,6 +96,18 @@ namespace Trustcoin.Core.Test
             OtherAccount.EndorceArtefact(artefact);
 
             Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
+        }
+
+        [Fact]
+        public void WhenEndorceArtefactMayTimes_MoneyIncreaseWithLessThan_1()
+        {
+            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
+            var artefact = ThirdAccount.CreateArtefact(ArtefactName);
+
+            for (int i = 0; i < 10; i++)
+                MyAccount.EndorceArtefact(artefact);
+            Assert.InRange((float)MyAccount.GetMoney(ThirdAccountName), 0, 1);
         }
 
         //Trust
@@ -160,35 +153,6 @@ namespace Trustcoin.Core.Test
 
             var expectedTrust = trustBefore.Increase(ArtefactEndorcementTrustFactor);
             Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Fact]
-        public void WhenEndorceEndorcedArtefact_TrustOfOwnerIsUnchanged()
-        {
-            Interconnect(MyAccount, OtherAccount);
-            var artefact = OtherAccount.CreateArtefact(ArtefactName);
-            MyAccount.EndorceArtefact(artefact);
-            var trustBefore = MyAccount.GetTrust(OtherAccountName);
-
-            MyAccount.EndorceArtefact(artefact);
-
-            Assert.Equal(trustBefore, MyAccount.GetTrust(OtherAccountName));
-        }
-
-        [Fact]
-        public void WhenPeerEndorceEndorcedArtefact_PeerLoosesTrust()
-        {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            var artefact = ThirdAccount.CreateArtefact(ArtefactName);
-            OtherAccount.EndorceArtefact(artefact);
-            var trustBefore = MyAccount.GetTrust(OtherAccountName);
-
-            OtherAccount.GetArtefact(ArtefactName).RemoveEndorcer(OtherAccount.Self);
-            OtherAccount.EndorceArtefact(artefact);
-
-            var expectedTrust = trustBefore.Decrease(DoubleEndorceArtefactDistrustFactor);
-            Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
-            Assert.Equal(expectedTrust, ThirdAccount.GetTrust(OtherAccountName));
         }
 
         [Fact]

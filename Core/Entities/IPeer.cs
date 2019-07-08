@@ -5,7 +5,6 @@ namespace Trustcoin.Core.Entities
     public interface IPeer : IAgent
     {
         void Endorce();
-        bool Endorces(string name);
         SignedWeight Trust { get; set; }
         Money Money { get; set; }
 

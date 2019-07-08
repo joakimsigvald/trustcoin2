@@ -20,8 +20,6 @@ namespace Trustcoin.Core.Entities
 
         public void Endorce()
         {
-            if (IsEndorced) return;
-            IsEndorced = true;
             Trust = Trust.Increase(EndorcementTrustFactor);
         }
 

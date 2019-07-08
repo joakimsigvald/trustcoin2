@@ -7,15 +7,10 @@ namespace Trustcoin.Core.Entities
     {
         IEnumerable<IPeer> Peers { get; }
         string Name { get; }
-
         IArtefact CreateArtefact(string name);
-
         IPeer Self { get; }
-
         void SyncAll();
-
         byte[] PublicKey { get; }
-
         IPeer Connect(string name);
         bool IsConnectedTo(string name);
         IPeer GetPeer(string name);
@@ -33,6 +28,5 @@ namespace Trustcoin.Core.Entities
         void ForgetArtefact(string name);
         void DestroyArtefact(string artefactName);
         void EndorceArtefact(IArtefact artefact);
-        bool EndorcesArtefact(string name, string artefactName);
     }
 }

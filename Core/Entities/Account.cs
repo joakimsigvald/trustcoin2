@@ -67,15 +67,9 @@ namespace Trustcoin.Core.Entities
             }
             else
                 _knownArtefacts.Add(artefact.Name, artefact);
-            if (artefact.IsEndorcedBy(Name))
-                return;
             IncreaseTrust(owner.Name, ArtefactEndorcementTrustFactor);
             OnEndorcedArtefact(artefact);
         }
-
-        public bool EndorcesArtefact(string agentName, string artefactName)
-            => KnowsArtefact(artefactName)
-            && GetArtefact(artefactName).IsEndorcedBy(agentName);
 
         public bool KnowsArtefact(string name)
             => _knownArtefacts.ContainsKey(name);
@@ -186,7 +180,6 @@ namespace Trustcoin.Core.Entities
             var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
             {
                 Trust = SignedWeight.Max,
-                IsEndorced = true
             };
             self.AddRelation(self);
             return self;
@@ -260,13 +253,8 @@ namespace Trustcoin.Core.Entities
         private void WhenEndorce(IPeer peer, EndorceAction ea)
         {
             var relation = ProduceRelation(peer, ea.AgentName);
-            if (relation.IsEndorced)
-            {
-                peer.DecreaseTrust(DoubleEndorceDistrustFactor);
-                return;
-            }
             AddMoneyFromEndorcement(peer, relation);
-            relation.IsEndorced = true;
+            relation.Endorce();
         }
 
         private void WhenEndorceArtefact(IPeer peer, ArtefactAction action)
@@ -280,11 +268,6 @@ namespace Trustcoin.Core.Entities
                     peer.DecreaseTrust(EndorceCounterfeitArtefactDistrustFactor);
                     return;
                 }
-                if (artefact.IsEndorcedBy(peer.Name))
-                {
-                    peer.DecreaseTrust(DoubleEndorceArtefactDistrustFactor);
-                    return;
-                }
             }
             else
                 _knownArtefacts.Add(artefact.Name, artefact);
@@ -292,7 +275,6 @@ namespace Trustcoin.Core.Entities
             var relation = ProduceRelation(peer, artefact.OwnerName);
             AddMoneyFromEndorcement(peer, relation, ArtefactMoneyFactor);
             relation.IncreaseStrength(ArtefactEndorcementTrustFactor);
-            artefact.AddEndorcer(peer);
         }
 
         private Relation ProduceRelation(IPeer source, string targetName) 

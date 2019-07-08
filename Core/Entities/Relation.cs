@@ -13,15 +13,9 @@ namespace Trustcoin.Core.Entities
         public IAgent Agent { get; }
         public Weight Strength { get; set; }
 
-        public bool IsEndorced
+        public void Endorce()
         {
-            get => Agent.IsEndorced;
-            set
-            {
-                if (IsEndorced) return;
-                Agent.IsEndorced = true;
-                IncreaseStrength(EndorcementTrustFactor);
-            }
+            IncreaseStrength(EndorcementTrustFactor);
         }
 
         public void IncreaseStrength(Weight factor)

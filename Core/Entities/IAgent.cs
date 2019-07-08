@@ -6,7 +6,6 @@ namespace Trustcoin.Core.Entities
     {
         string Name { get; }
         byte[] PublicKey { get; set; }
-        bool IsEndorced { get; set; }
         ICollection<Relation> Relations { get; }
         bool IsConnectedTo(string targetName);
         IAgent Clone();
