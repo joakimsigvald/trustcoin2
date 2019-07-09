@@ -12,11 +12,12 @@ namespace Trustcoin.Core.Test
         protected readonly IAccount MyAccount;
         protected readonly IAccount OtherAccount;
         protected readonly IAccount ThirdAccount;
-        protected readonly IAccount FourthAccount;
+        protected readonly IActor MyActor;
+        protected readonly IActor OtherActor;
+        protected readonly IActor ThirdActor;
         protected const string MyAccountName = "MyAccount";
         protected const string OtherAccountName = "OtherAccount";
         protected const string ThirdAccountName = "ThirdAccount";
-        protected const string FourthAccountName = "FourthAccount";
 
         protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {
@@ -24,15 +25,18 @@ namespace Trustcoin.Core.Test
             MyAccount = _network.CreateAccount(MyAccountName);
             OtherAccount = _network.CreateAccount(OtherAccountName);
             ThirdAccount = _network.CreateAccount(ThirdAccountName);
+            MyActor = MyAccount.GetActor(_network);
+            OtherActor = OtherAccount.GetActor(_network);
+            ThirdActor = ThirdAccount.GetActor(_network);
         }
 
-        protected void Interconnect(params IAccount[] accounts)
+        protected void Interconnect(params IActor[] actors)
         {
-            var agentNames = accounts.Select(account => account.Name).ToList();
-            agentNames.ForEach(name => ConnectFrom(name, accounts.Where(acc => acc.Name != name)));
+            var agentNames = actors.Select(actor => actor.Name).ToList();
+            agentNames.ForEach(name => ConnectFrom(name, actors.Where(acc => acc.Name != name)));
         }
 
-        private void ConnectFrom(string agentName, IEnumerable<IAccount> accounts)
-            => accounts.ToList().ForEach(acc => acc.Connect(agentName));
+        private void ConnectFrom(string agentName, IEnumerable<IActor> actors)
+            => actors.ToList().ForEach(actor => actor.Connect(agentName));
     }
 }

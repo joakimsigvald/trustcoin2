@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
@@ -16,24 +15,21 @@ namespace Trustcoin.Core.Infrastructure
             => _cryptographyFactory = cryptographyFactory;
 
         public IAccount CreateAccount(string name)
-            => _accounts[name] = new Account(this, _cryptographyFactory.CreateCryptography(), name);
+            => _accounts[name] = new Account(_cryptographyFactory.CreateCryptography(), name);
 
         public IAgent FindAgent(string name)
             => _accounts.TryGetValue(name, out var account) ? new Agent(account) : null;
 
         public IDictionary<string, Money> RequestUpdate(string targetName, string[] subjectNames)
         {
-            var targetClient = GetClient(targetName);
+            var targetClient = _accounts[targetName].GetClient(this);
             return targetClient.RequestUpdate(subjectNames);
         }
 
         public bool SendAction(string targetName, string subjectName, SignedAction action)
         {
-            var targetClient = GetClient(targetName);
+            var targetClient = _accounts[targetName].GetClient(this);
             return targetClient.Update(subjectName, action.Clone());
         }
-
-        private IClient GetClient(string name)
-            => _accounts[name];
     }
 }

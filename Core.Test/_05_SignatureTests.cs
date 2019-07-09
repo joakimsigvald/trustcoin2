@@ -75,17 +75,17 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenRenewKeys_PeersAreUpdated()
         {
-            MyAccount.Connect(OtherAccountName);
-            OtherAccount.Connect(MyAccountName);
+            MyActor.Connect(OtherAccountName);
+            OtherActor.Connect(MyAccountName);
 
-            MyAccount.RenewKeys();
+            MyActor.RenewKeys();
             Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyAccountName).PublicKey);
         }
 
         [Fact]
         public void WhenUpdatedWithInvalidSignature_ThrowsInvalidOperationException()
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             var otherAgent = _network.FindAgent(OtherAccountName);
             Assert.Throws<InvalidOperationException>(
                 () => _network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));

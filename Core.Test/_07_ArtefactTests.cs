@@ -28,7 +28,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterCreateArtefact_SelfHasArtefact()
         {
-            MyAccount.CreateArtefact(ArtefactName);
+            MyActor.CreateArtefact(ArtefactName);
             Assert.True(MyAccount.Self.HasArtefact(ArtefactName));
         }
 
@@ -44,8 +44,8 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterCreateArtefact_MyPeersKnowIHaveIt()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            MyActor.CreateArtefact(ArtefactName);
             Assert.True(OtherAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
             Assert.True(ThirdAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
         }
@@ -53,9 +53,9 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void CanCreateTwoDifferentArtefacts()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            MyAccount.CreateArtefact(ArtefactName);
-            MyAccount.CreateArtefact(AnotherArtefactName);
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            MyActor.CreateArtefact(ArtefactName);
+            MyActor.CreateArtefact(AnotherArtefactName);
             Assert.True(OtherAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
             Assert.True(ThirdAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
             Assert.True(OtherAccount.GetPeer(MyAccountName).HasArtefact(AnotherArtefactName));
@@ -65,11 +65,11 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterOtherAccountCreateAndDestroyArtefact_ICanCreateSameArtefact()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            OtherAccount.CreateArtefact(ArtefactName);
-            OtherAccount.DestroyArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            OtherActor.CreateArtefact(ArtefactName);
+            OtherActor.DestroyArtefact(ArtefactName);
 
-            MyAccount.CreateArtefact(ArtefactName);
+            MyActor.CreateArtefact(ArtefactName);
 
             Assert.True(ThirdAccount.GetPeer(MyAccountName).HasArtefact(ArtefactName));
         }
@@ -88,12 +88,12 @@ namespace Trustcoin.Core.Test
             float relationOfEndorcingPeerToEndorcedPeer,
             float expectedIncrease)
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
-            var artefact = ThirdAccount.CreateArtefact(ArtefactName);
+            var artefact = ThirdActor.CreateArtefact(ArtefactName);
 
-            OtherAccount.EndorceArtefact(artefact);
+            OtherActor.EndorceArtefact(artefact);
 
             Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
         }
@@ -101,12 +101,12 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenEndorceArtefactMayTimes_MoneyIncreaseWithLessThan_1()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
-            var artefact = ThirdAccount.CreateArtefact(ArtefactName);
+            var artefact = ThirdActor.CreateArtefact(ArtefactName);
 
             for (int i = 0; i < 10; i++)
-                MyAccount.EndorceArtefact(artefact);
+                MyActor.EndorceArtefact(artefact);
             Assert.InRange((float)MyAccount.GetMoney(ThirdAccountName), 0, 1);
         }
 
@@ -115,12 +115,12 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenPeerCreateArtefactThatOtherPeerAlreadyHas_PeerLoosesTrust()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             var otherTrustBefore = MyAccount.GetTrust(OtherAccountName);
             var thirdTrustBefore = MyAccount.GetTrust(ThirdAccountName);
 
-            OtherAccount.CreateArtefact(ArtefactName);
-            ThirdAccount.CreateArtefact(ArtefactName);
+            OtherActor.CreateArtefact(ArtefactName);
+            ThirdActor.CreateArtefact(ArtefactName);
 
             Assert.Equal(otherTrustBefore, MyAccount.GetTrust(OtherAccountName));
             var expectedThirdTrust = thirdTrustBefore.Decrease(CounterfeitArtefactDistrustFactor);
@@ -131,11 +131,11 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenPeerDestroyArtefactThatPeerDoesntOwn_PeerLoosesTrust()
         {
-            MyAccount.CreateArtefact(ArtefactName);
-            OtherAccount.CreateArtefact(ArtefactName);
-            Interconnect(MyAccount, OtherAccount);
+            MyActor.CreateArtefact(ArtefactName);
+            OtherActor.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor);
             var trustBefore = MyAccount.GetTrust(OtherAccountName);
-            OtherAccount.DestroyArtefact(ArtefactName);
+            OtherActor.DestroyArtefact(ArtefactName);
 
             var expectedTrustAfter = trustBefore.Decrease(DestroyOthersArtefactDistrustFactor);
 
@@ -145,11 +145,11 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterEndorcedArtefact_OwnerGainsTrust()
         {
-            Interconnect(MyAccount, OtherAccount);
-            var artefact = OtherAccount.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor);
+            var artefact = OtherActor.CreateArtefact(ArtefactName);
             var trustBefore = MyAccount.GetTrust(OtherAccountName);
 
-            MyAccount.EndorceArtefact(artefact);
+            MyActor.EndorceArtefact(artefact);
 
             var expectedTrust = trustBefore.Increase(ArtefactEndorcementTrustFactor);
             Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
@@ -158,13 +158,13 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenPeerEndorceArtefactWithWrongOwner_PeerLoosesTrust()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
-            var artefact = ThirdAccount.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            var artefact = ThirdActor.CreateArtefact(ArtefactName);
             var trustBefore = MyAccount.GetTrust(OtherAccountName);
             OtherAccount.ForgetArtefact(ArtefactName);
 
             var fakeArtefact = new Artefact(artefact.Name, OtherAccountName);
-            OtherAccount.EndorceArtefact(fakeArtefact);
+            OtherActor.EndorceArtefact(fakeArtefact);
 
             var expectedTrust = trustBefore.Decrease(EndorceCounterfeitArtefactDistrustFactor);
             Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
@@ -175,11 +175,11 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenPeerEndorceArtefact_PeerRelationWithOwnerIsStrengthened()
         {
-            Interconnect(MyAccount, OtherAccount);
-            var artefact = OtherAccount.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor);
+            var artefact = OtherActor.CreateArtefact(ArtefactName);
             var strengthBefore = MyAccount.Self.GetRelation(OtherAccountName).Strength;
 
-            MyAccount.EndorceArtefact(artefact);
+            MyActor.EndorceArtefact(artefact);
 
             var expectedStrength = strengthBefore.Increase(ArtefactEndorcementTrustFactor);
             var strengthAfter = MyAccount.Self.GetRelation(OtherAccountName).Strength;

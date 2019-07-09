@@ -9,7 +9,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void NewPeerHas_0_Coins()
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             Assert.Equal((Money)0, MyAccount.GetPeer(OtherAccountName).Money);
         }
 
@@ -20,7 +20,7 @@ namespace Trustcoin.Core.Test
         [InlineData(2, 3, 3)]
         public void AfterSetMoney_PeerHasMoney(float initialMoney, float setMoney, float hasMoney)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetMoney(OtherAccountName, (Money)initialMoney);
 
             MyAccount.SetMoney(OtherAccountName, (Money)setMoney);
@@ -33,7 +33,7 @@ namespace Trustcoin.Core.Test
         [InlineData(-0.00001)]
         public void WhenSetNegativeMoney_ThrowsOutOfBounds(float setMoney)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetMoney(OtherAccountName, (Money)setMoney));
         }
 
@@ -49,11 +49,11 @@ namespace Trustcoin.Core.Test
             float relationOfEndorcingPeerToEndorcedPeer,
             float expectedIncrease)
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherAccount.Endorce(ThirdAccountName);
+            OtherActor.Endorce(ThirdAccountName);
 
             Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
         }
@@ -70,21 +70,21 @@ namespace Trustcoin.Core.Test
             float relationOfEndorcingPeerToEndorcedPeer,
             float expectedIncrease)
         {
-            Interconnect(MyAccount, OtherAccount);
+            Interconnect(MyActor, OtherActor);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
             MyAccount.SetRelationWeight(OtherAccountName, MyAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherAccount.Endorce(MyAccountName);
+            OtherActor.Endorce(MyAccountName);
             Assert.Equal(expectedIncrease, MyAccount.Self.Money);
         }
 
         [Fact]
         public void WhenEndorcePeerManyTimes_MoneyIncreaseLessThanTwo()
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
             for (int i = 0; i < 10; i++)
-                OtherAccount.Endorce(ThirdAccountName);
+                OtherActor.Endorce(ThirdAccountName);
             Assert.InRange((float)MyAccount.GetMoney(ThirdAccountName), 0, 2);
         }
     }

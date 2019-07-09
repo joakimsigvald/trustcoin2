@@ -13,7 +13,7 @@ namespace Trustcoin.Core.Test
         public void GivenNoPeers_WhenSyncSelf_ThenGetSameMoney(float money)
         {
             MyAccount.Self.Money = (Money)money;
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(money, MyAccount.Self.Money);
         }
@@ -24,12 +24,12 @@ namespace Trustcoin.Core.Test
         public void Given_1_PeerWithFullTrustAndConnectivity_WhenSyncSelf_ThenGetMeanPeerMoney(
             float myMoneyBefore, float peerAssessment, float myMoneyAfter)
         {
-            Interconnect(MyAccount, OtherAccount);
+            Interconnect(MyActor, OtherActor);
             OtherAccount.SetMoney(MyAccountName, (Money)peerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
 
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(myMoneyAfter, MyAccount.Self.Money);
         }
@@ -44,14 +44,14 @@ namespace Trustcoin.Core.Test
             float secondPeerAssessment,
             float myMoneyAfter)
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
             ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
             MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
 
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(myMoneyAfter, MyAccount.Self.Money);
         }
@@ -68,14 +68,14 @@ namespace Trustcoin.Core.Test
             float mySelfMoneyAfter,
             float myPeerMoneyAfter)
         {
-            Interconnect(MyAccount, OtherAccount);
+            Interconnect(MyActor, OtherActor);
             MyAccount.Self.Money = (Money)mySelfMoneyBefore;
             MyAccount.SetMoney(OtherAccountName, (Money)myPeerMoneyBefore);
             OtherAccount.Self.Money = (Money)peerSelfMoneyBefore;
             OtherAccount.SetMoney(MyAccountName, (Money)peerMyMoneyBefore);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
 
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(mySelfMoneyAfter, MyAccount.Self.Money);
             Assert.Equal(myPeerMoneyAfter, MyAccount.GetMoney(OtherAccountName));
@@ -94,14 +94,14 @@ namespace Trustcoin.Core.Test
             float secondPeerAssessment,
             float myMoneyAfter)
         {
-            Interconnect(MyAccount, OtherAccount, ThirdAccount);
+            Interconnect(MyActor, OtherActor, ThirdActor);
             OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
             ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)firstPeerTrust);
             MyAccount.SetTrust(ThirdAccountName, (SignedWeight)secondPeerTrust);
 
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(myMoneyAfter, MyAccount.Self.Money);
         }
@@ -122,24 +122,27 @@ namespace Trustcoin.Core.Test
             int[] peerAssessments,
             float peerMoneyAfter)
         {
-            var peers = peerTrusts.Select((pt, i) => _network.CreateAccount($"Peer{i}")).ToArray();
+            var peers = peerTrusts
+                .Select((pt, i) => _network
+                .CreateAccount($"Peer{i}").GetActor(_network))
+                .ToArray();
             int i = 0;
             var peerToUpdate = peers[0];
             foreach (var peer in peers)
             {
-                Interconnect(MyAccount, peer);
+                Interconnect(MyActor, peer);
                 MyAccount.SetTrust(peer.Name, (SignedWeight)peerTrusts[i]);
                 var peerAssessment = peerAssessments[i];
                 if (peerAssessment >= 0)
                 {
                     Interconnect(peer, peerToUpdate);
-                    peer.SetMoney(peerToUpdate.Name, (Money)peerAssessments[i]);
+                    peer.Account.SetMoney(peerToUpdate.Name, (Money)peerAssessments[i]);
                 }
                 i++;
             }
             MyAccount.SetMoney(peerToUpdate.Name, (Money)peerMoneyBefore);
 
-            MyAccount.SyncAll();
+            MyActor.SyncAll();
 
             Assert.Equal(peerMoneyAfter, MyAccount.GetMoney(peerToUpdate.Name));
         }
@@ -147,12 +150,12 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenConnectPeer_PeerIsSynced()
         {
-            Interconnect(MyAccount, OtherAccount);
-            Interconnect(ThirdAccount, OtherAccount);
+            Interconnect(MyActor, OtherActor);
+            Interconnect(ThirdActor, OtherActor);
             OtherAccount.SetMoney(ThirdAccountName, (Money)100);
             MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
 
-            MyAccount.Connect(ThirdAccountName);
+            MyActor.Connect(ThirdAccountName);
 
             Assert.Equal((Money)50, MyAccount.GetMoney(ThirdAccountName));
         }

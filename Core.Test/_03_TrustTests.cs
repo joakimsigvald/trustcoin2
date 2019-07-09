@@ -9,7 +9,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterConnectedAgent_TrustIs_BaseTrust()
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             Assert.Equal(0f, MyAccount.GetTrust(OtherAccountName));
         }
 
@@ -26,7 +26,7 @@ namespace Trustcoin.Core.Test
         public void CanSetAndGetTrustOfPeer(float trustValue)
         {
             var trust = (SignedWeight)trustValue;
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, trust);
             Assert.Equal(trust, MyAccount.GetTrust(OtherAccountName));
         }
@@ -36,7 +36,7 @@ namespace Trustcoin.Core.Test
         [InlineData(1.001)]
         public void WhenSetTrustOutOfBounds_ThrowsOutOfBoundsException(float trust)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherAccountName, (SignedWeight)trust));
         }
 
@@ -48,7 +48,7 @@ namespace Trustcoin.Core.Test
         [InlineData(-1, 1, -0.5)]
         public void CanIncreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
             MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor);
             Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherAccountName));
@@ -62,7 +62,7 @@ namespace Trustcoin.Core.Test
         [InlineData(-1, 1, -1)]
         public void CanDecreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
 
             MyAccount.DecreaseTrust(OtherAccountName, (Weight)factor);
@@ -78,7 +78,7 @@ namespace Trustcoin.Core.Test
         public void WhenIncreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherAccountName, (Weight)factor));
         }
@@ -91,7 +91,7 @@ namespace Trustcoin.Core.Test
         public void WhenDecreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
-            MyAccount.Connect(OtherAccountName);
+            MyActor.Connect(OtherAccountName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustBefore);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherAccountName, (Weight)factor));
         }
