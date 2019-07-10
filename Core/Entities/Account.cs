@@ -24,6 +24,7 @@ namespace Trustcoin.Core.Entities
         }
 
         public string Name { get; private set; }
+        public ICollection<IArtefact> Artefacts => _knownArtefacts.Values;
         public byte[] PublicKey => _cryptography.PublicKey;
 
         public IPeer Self { get; }
@@ -111,5 +112,21 @@ namespace Trustcoin.Core.Entities
 
         public IActor GetActor(INetwork network)
             => new Actor(network, this);
+
+        public void RemoveArtefact(IArtefact artefact)
+        {
+            ForgetArtefact(artefact.Name);
+            if (IsConnectedTo(artefact.OwnerName))
+                GetPeer(artefact.OwnerName).RemoveArtefact(artefact);
+        }
+
+        public void AddArtefact(string artefactName, string ownerName)
+        {
+            if (!IsConnectedTo(ownerName))
+                return;
+            var newArtefact = new Artefact(artefactName, ownerName);
+            GetPeer(ownerName).AddArtefact(newArtefact);
+            RememberArtefact(newArtefact);
+        }
     }
 }

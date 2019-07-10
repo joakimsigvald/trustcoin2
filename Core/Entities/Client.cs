@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Trustcoin.Core.Actions;
-using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Infrastructure;
 using Trustcoin.Core.Types;
 using static Trustcoin.Core.Entities.Constants;
@@ -20,13 +18,15 @@ namespace Trustcoin.Core.Entities
             _account = account;
         }
 
-        public IDictionary<string, Money> RequestUpdate(string[] subjectNames)
+        public Update RequestUpdate(string[] subjectNames, string[] artefactNames)
         {
             var requestedPeers = _account.Peers.Select(p => p.Name)
                 .Intersect(subjectNames)
-            .Select(_account.GetPeer)
-            .ToArray();
-            return requestedPeers.ToDictionary(p => p.Name, p => p.Money);
+                .Select(_account.GetPeer);
+            var requestedArtefacts = _account.Artefacts.Select(p => p.Name)
+                .Intersect(artefactNames)
+                .Select(_account.GetArtefact);
+            return new Update(requestedPeers, requestedArtefacts);
         }
 
         public bool Update(string subjectName, SignedAction signedAction)
@@ -115,15 +115,15 @@ namespace Trustcoin.Core.Entities
             if (peer.HasArtefact(action.Artefact.Name))
                 return;
             if (_account.KnowsArtefact(action.Artefact.Name))
-                peer.DecreaseTrust(CounterfeitArtefactDistrustFactor);
+                peer.DecreaseTrust(MakeCounterfeitArtefactDistrustFactor);
             else
-                AddArtefact(peer, action.Artefact);
+                _account.AddArtefact(action.Artefact.Name, peer.Name);
         }
 
         private void WhenDestroyArtefact(IPeer peer, ArtefactAction action)
         {
             if (peer.HasArtefact(action.Artefact.Name))
-                DestroyArtefact(peer, action.Artefact);
+                _account.RemoveArtefact(action.Artefact);
             else
                 peer.DecreaseTrust(DestroyOthersArtefactDistrustFactor);
         }
@@ -136,18 +136,6 @@ namespace Trustcoin.Core.Entities
             if (addedMoney <= 0) return;
             var endorcedPeer = _account.GetPeer(relation.Agent.Name);
             endorcedPeer.Money += (Money)addedMoney;
-        }
-
-        public void AddArtefact(IPeer peer, IArtefact artefact)
-        {
-            peer.AddArtefact(artefact);
-            _account.RememberArtefact(artefact);
-        }
-
-        public void DestroyArtefact(IPeer peer, IArtefact artefact)
-        {
-            peer.RemoveArtefact(artefact);
-            _account.ForgetArtefact(artefact.Name);
         }
 
         private Relation ProduceRelation(IPeer source, string targetName)

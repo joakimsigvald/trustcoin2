@@ -123,7 +123,7 @@ namespace Trustcoin.Core.Test
             ThirdActor.CreateArtefact(ArtefactName);
 
             Assert.Equal(otherTrustBefore, MyAccount.GetTrust(OtherAccountName));
-            var expectedThirdTrust = thirdTrustBefore.Decrease(CounterfeitArtefactDistrustFactor);
+            var expectedThirdTrust = thirdTrustBefore.Decrease(MakeCounterfeitArtefactDistrustFactor);
 
             Assert.Equal(expectedThirdTrust, MyAccount.GetTrust(ThirdAccountName));
         }

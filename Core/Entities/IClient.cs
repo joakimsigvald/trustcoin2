@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using Trustcoin.Core.Actions;
-using Trustcoin.Core.Types;
+﻿using Trustcoin.Core.Actions;
+using Trustcoin.Core.Infrastructure;
 
 namespace Trustcoin.Core.Entities
 {
     public interface IClient
     {
         bool Update(string subjectName, SignedAction action);
-        IDictionary<string, Money> RequestUpdate(string[] subjectNames);
+        Update RequestUpdate(string[] subjectNames, string[] artefactNames);
     }
 }

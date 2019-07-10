@@ -8,6 +8,7 @@ namespace Trustcoin.Core.Entities
     public interface IAccount
     {
         IEnumerable<IPeer> Peers { get; }
+        ICollection<IArtefact> Artefacts { get; }
         string Name { get; }
         IPeer Self { get; }
         byte[] PublicKey { get; }
@@ -28,6 +29,9 @@ namespace Trustcoin.Core.Entities
         void VerifySignature(SignedAction signedAction, IPeer peer);
         bool KnowsArtefact(string name);
         void RememberArtefact(IArtefact artefact);
+
+        void RemoveArtefact(IArtefact artefact);
+        void AddArtefact(string artefactName, string ownerName);
         SignedAction Sign(IAction action);
         IClient GetClient(INetwork network);
         IActor GetActor(INetwork network);

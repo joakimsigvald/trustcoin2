@@ -69,7 +69,9 @@ namespace Trustcoin.Core.Entities
 
         public void SyncAll()
         {
-            Sync(Account.Peers.Select(peer => peer.Name).ToArray());
+            Sync(
+                Account.Peers.Select(peer => peer.Name).ToArray(), 
+                Account.Artefacts.Select(a => a.Name).ToArray());
         }
 
         public IArtefact CreateArtefact(string name)
@@ -88,28 +90,70 @@ namespace Trustcoin.Core.Entities
 
         private void SyncPeer(IPeer peer)
         {
-            Sync(new[] { peer.Name });
+            Sync(new[] { peer.Name }, new string[0]);
         }
 
-        private void Sync(string[] peersToUpdate)
+        private void Sync(string[] peersToUpdate, string[] artefactsToUpdate)
+        {
+            var peerUpdates = GetPeerUpdates(peersToUpdate, artefactsToUpdate);
+            SyncMoney(peerUpdates);
+            SyncArtefacts(peerUpdates);
+        }
+
+        private void SyncMoney(IDictionary<IPeer, Update> peerUpdates)
         {
             var totalTrust = Account.Peers.Sum(p => p.Trust);
-            var peerAssessments = TrustedPeers
-                .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate))
-                .SelectMany(x => x.Value.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))
+            var moneyAssessments = peerUpdates
+                .SelectMany(x => x.Value.PeerMoney.Select(y => (target: x.Key, subject: y.Key, money: y.Value)))
                 .GroupBy(iu => iu.subject)
                 .ToDictionary(
                 g => Account.GetPeer(g.Key),
                 g => g.Select(x => (x.target, x.money)).ToArray());
-            foreach (var kvp in peerAssessments)
-                SyncPeer(totalTrust, kvp.Key, kvp.Value);
+            foreach (var kvp in moneyAssessments)
+                SyncMoney(totalTrust, kvp.Key, kvp.Value);
         }
+
+        private void SyncArtefacts(IDictionary<IPeer, Update> peerUpdates)
+        {
+            var artefactAssessments = peerUpdates
+                .SelectMany(x => x.Value.ArtefactOwners.Select(
+                    y => (target: x.Key, subject: y.Key, owner: y.Value)))
+                .GroupBy(iu => iu.subject)
+                .ToDictionary(
+                g => Account.GetArtefact(g.Key),
+                g => g.Select(x => (x.target, x.owner)).ToArray());
+            foreach (var kvp in artefactAssessments)
+                SyncArtefact(kvp.Key, kvp.Value);
+        }
+
+        private IDictionary<IPeer, Update> GetPeerUpdates(string[] peersToUpdate, string[] artefactsToUpdate)
+            => TrustedPeers
+                .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
 
         private IEnumerable<IPeer> TrustedPeers => Account.Peers.Where(p => p.Trust > 0);
 
-        private void SyncPeer(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
+        private void SyncMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
         {
             subject.Money = ComputeMoney(totalTrust, subject, assessments);
+        }
+
+        private void SyncArtefact(IArtefact subject, (IPeer target, string owner)[] assessments)
+        {
+            var newOwnerName = ComputeOwner(subject, assessments);
+            if (newOwnerName != subject.OwnerName)
+                MoveArtefact(subject, newOwnerName);
+            assessments
+                .Where(a => a.owner != newOwnerName)
+                .Select(a => a.target)
+                .Except(new[] { Account.Self})
+                .ToList()
+                .ForEach(p => p.DecreaseTrust(HoldCounterfeitArtefactDistrustFactor));
+        }
+
+        private void MoveArtefact(IArtefact artefact, string toPeerName)
+        {
+            Account.RemoveArtefact(artefact);
+            Account.AddArtefact(artefact.Name, toPeerName);
         }
 
         private Money ComputeMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
@@ -120,13 +164,24 @@ namespace Trustcoin.Core.Entities
             return weightedMeanAssessment;
         }
 
+        private string ComputeOwner(IArtefact subject, (IPeer target, string owner)[] assessments)
+        {
+            var sumOfTrusts = assessments.Sum(a => a.target.Trust);
+            var halfTrust = sumOfTrusts / 2;
+            var accumulatedTrust = 0f;
+            return assessments.OrderBy(a => a.owner == subject.OwnerName)
+                .SkipWhile(a => (accumulatedTrust += a.target.Trust) <= halfTrust)
+                .First().owner;
+        }
+
         private Money ComputeMeanAssessment((IPeer target, Money money)[] assessments)
             => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
-        private IDictionary<string, Money> GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate)
+        private Update GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate, string[] artefactsToUpdate)
             => _network.RequestUpdate(
                 peer.Name,
-                peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray());
+                peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray(),
+                artefactsToUpdate);
 
         private void OnAddedConnection(string agentName)
         {

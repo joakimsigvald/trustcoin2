@@ -20,10 +20,10 @@ namespace Trustcoin.Core.Infrastructure
         public IAgent FindAgent(string name)
             => _accounts.TryGetValue(name, out var account) ? new Agent(account) : null;
 
-        public IDictionary<string, Money> RequestUpdate(string targetName, string[] subjectNames)
+        public Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames)
         {
             var targetClient = _accounts[targetName].GetClient(this);
-            return targetClient.RequestUpdate(subjectNames);
+            return targetClient.RequestUpdate(subjectNames, artefactNames);
         }
 
         public bool SendAction(string targetName, string subjectName, SignedAction action)
