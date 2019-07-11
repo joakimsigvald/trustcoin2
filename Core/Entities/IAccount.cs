@@ -32,8 +32,18 @@ namespace Trustcoin.Core.Entities
 
         void RemoveArtefact(IArtefact artefact);
         void AddArtefact(string artefactName, string ownerName);
+        void MoveArtefact(IArtefact artefact, string ownerName);
         SignedAction Sign(IAction action);
         IClient GetClient(INetwork network);
         IActor GetActor(INetwork network);
+        IArtefact ProduceArtefact(string name);
+
+        Transaction GetPendingTransaction(string key);
+        void AddTransaction(Transaction action);
+        bool HasPendingTransaction(string key);
+        void ClosePendingTransaction(string key);
+        bool HasReceivedTransaction(string key);
+        void AddPendingTransaction(Transaction transaction);
+        void AddReceivedTransaction(string key);
     }
 }

@@ -12,8 +12,10 @@ namespace Trustcoin.Core.Entities
     public class Account : IAccount
     {
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
+        private readonly IDictionary<string, Transaction> _pendingTransactions = new Dictionary<string, Transaction>();
         private readonly IDictionary<string, IArtefact> _knownArtefacts = new Dictionary<string, IArtefact>();
         private readonly ICryptography _cryptography;
+        private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
         public Account(ICryptography cryptography, string name)
         {
@@ -30,12 +32,17 @@ namespace Trustcoin.Core.Entities
         public IPeer Self { get; }
 
         public bool IsConnectedTo(string name)
-            => name == Name || _peers.ContainsKey(name);
+            => name == Name || (name != null && _peers.ContainsKey(name));
 
         public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
 
         public bool KnowsArtefact(string name)
             => _knownArtefacts.ContainsKey(name);
+
+        public IArtefact ProduceArtefact(string name)
+            => _knownArtefacts.TryGetValue(name, out var artefact) 
+            ? artefact 
+            : new Artefact(name, null);
 
         public IArtefact GetArtefact(string name)
             => _knownArtefacts[name];
@@ -108,10 +115,16 @@ namespace Trustcoin.Core.Entities
             => _cryptography.Sign(action);
 
         public IClient GetClient(INetwork network)
-            => new Client(network, this);
+            => new Client(network, GetActor(network));
 
         public IActor GetActor(INetwork network)
             => new Actor(network, this);
+
+        public void MoveArtefact(IArtefact artefact, string ownerName)
+        {
+            RemoveArtefact(artefact);
+            AddArtefact(artefact.Name, ownerName);
+        }
 
         public void RemoveArtefact(IArtefact artefact)
         {
@@ -128,5 +141,32 @@ namespace Trustcoin.Core.Entities
             GetPeer(ownerName).AddArtefact(newArtefact);
             RememberArtefact(newArtefact);
         }
+
+        public void AddTransaction(Transaction transaction)
+            => _pendingTransactions.Add(transaction.Key, transaction);
+
+        public Transaction GetPendingTransaction(string key)
+            => _pendingTransactions[key];
+
+        public bool HasPendingTransaction(string key)
+            => _pendingTransactions.ContainsKey(key);
+
+        public void ClosePendingTransaction(string key)
+        {
+            _pendingTransactions.Remove(key);
+        }
+
+        public void AddPendingTransaction(Transaction transaction)
+        {
+            _pendingTransactions.Add(transaction.Key, transaction);
+        }
+
+        public void AddReceivedTransaction(string key)
+        {
+            _receivedTransactions.Enqueue(key);
+        }
+
+        public bool HasReceivedTransaction(string key)
+            => _receivedTransactions.Contains(key);
     }
 }

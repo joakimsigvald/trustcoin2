@@ -9,32 +9,32 @@ namespace Trustcoin.Core.Entities
 {
     public class Client : IClient
     {
-        private readonly IAccount _account;
+        private readonly IActor _actor;
         private readonly INetwork _network;
 
-        public Client(INetwork network, IAccount account)
+        public Client(INetwork network, IActor actor)
         {
             _network = network;
-            _account = account;
+            _actor = actor;
         }
 
         public Update RequestUpdate(string[] subjectNames, string[] artefactNames)
         {
-            var requestedPeers = _account.Peers.Select(p => p.Name)
+            var requestedPeers = _actor.Account.Peers.Select(p => p.Name)
                 .Intersect(subjectNames)
-                .Select(_account.GetPeer);
-            var requestedArtefacts = _account.Artefacts.Select(p => p.Name)
+                .Select(_actor.Account.GetPeer);
+            var requestedArtefacts = _actor.Account.Artefacts.Select(p => p.Name)
                 .Intersect(artefactNames)
-                .Select(_account.GetArtefact);
+                .Select(_actor.Account.GetArtefact);
             return new Update(requestedPeers, requestedArtefacts);
         }
 
         public bool Update(string subjectName, SignedAction signedAction)
         {
-            if (!_account.IsConnectedTo(subjectName))
+            if (!_actor.Account.IsConnectedTo(subjectName))
                 return false;
-            var peer = _account.GetPeer(subjectName);
-            _account.VerifySignature(signedAction, peer);
+            var peer = _actor.Account.GetPeer(subjectName);
+            _actor.Account.VerifySignature(signedAction, peer);
             UpdatePeer(peer, signedAction.Action);
             return true;
         }
@@ -61,10 +61,36 @@ namespace Trustcoin.Core.Entities
                 case EndorceArtefactAction daa:
                     WhenEndorceArtefact(peer, daa);
                     break;
+                case StartTransationAction sta:
+                    WhenStartTransaction(sta);
+                    break;
+                case AcceptTransationAction ata:
+                    WhenAcceptTransaction(ata);
+                    break;
                 case NoAction _:
                     break;
                 default: throw new NotImplementedException("Action not implemented: " + action);
             }
+        }
+
+        private void WhenAcceptTransaction(AcceptTransationAction action)
+        {
+            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
+                return;
+            _actor.Account.MoveArtefact(
+                action.Transaction.Artefact, 
+                _actor.ProducePeer(action.Transaction.ReceiverName).Name);
+            _actor.Account.AddReceivedTransaction(action.Transaction.Key);
+            if (_actor.Account.HasPendingTransaction(action.Transaction.Key))
+            {
+                _actor.AcceptTransaction(action.Transaction.Key);
+                _actor.Account.ClosePendingTransaction(action.Transaction.Key);
+            }
+        }
+
+        private void WhenStartTransaction(StartTransationAction action)
+        {
+            _actor.Account.AddTransaction(action.Transaction);
         }
 
         private void WhenRenewKey(IPeer peer, RenewKeyAction ra)
@@ -93,9 +119,9 @@ namespace Trustcoin.Core.Entities
         private void WhenEndorceArtefact(IPeer peer, ArtefactAction action)
         {
             var artefact = action.Artefact;
-            if (_account.KnowsArtefact(action.Artefact.Name))
+            if (_actor.Account.KnowsArtefact(action.Artefact.Name))
             {
-                artefact = _account.GetArtefact(artefact.Name);
+                artefact = _actor.Account.GetArtefact(artefact.Name);
                 if (artefact.OwnerName != action.Artefact.OwnerName)
                 {
                     peer.DecreaseTrust(EndorceCounterfeitArtefactDistrustFactor);
@@ -103,7 +129,7 @@ namespace Trustcoin.Core.Entities
                 }
             }
             else
-                _account.RememberArtefact(artefact);
+                _actor.Account.RememberArtefact(artefact);
 
             var relation = ProduceRelation(peer, artefact.OwnerName);
             AddMoneyFromEndorcement(peer, relation, ArtefactMoneyFactor);
@@ -114,27 +140,27 @@ namespace Trustcoin.Core.Entities
         {
             if (peer.HasArtefact(action.Artefact.Name))
                 return;
-            if (_account.KnowsArtefact(action.Artefact.Name))
+            if (_actor.Account.KnowsArtefact(action.Artefact.Name))
                 peer.DecreaseTrust(MakeCounterfeitArtefactDistrustFactor);
             else
-                _account.AddArtefact(action.Artefact.Name, peer.Name);
+                _actor.Account.AddArtefact(action.Artefact.Name, peer.Name);
         }
 
         private void WhenDestroyArtefact(IPeer peer, ArtefactAction action)
         {
             if (peer.HasArtefact(action.Artefact.Name))
-                _account.RemoveArtefact(action.Artefact);
+                _actor.Account.RemoveArtefact(action.Artefact);
             else
                 peer.DecreaseTrust(DestroyOthersArtefactDistrustFactor);
         }
 
         private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation, float factor = 1)
         {
-            if (!_account.IsConnectedTo(relation.Agent.Name))
+            if (!_actor.Account.IsConnectedTo(relation.Agent.Name))
                 return;
             var addedMoney = factor * endorcer.Trust * (1 - (float)relation.Strength);
             if (addedMoney <= 0) return;
-            var endorcedPeer = _account.GetPeer(relation.Agent.Name);
+            var endorcedPeer = _actor.Account.GetPeer(relation.Agent.Name);
             endorcedPeer.Money += (Money)addedMoney;
         }
 

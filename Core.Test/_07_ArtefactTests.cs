@@ -8,9 +8,6 @@ namespace Trustcoin.Core.Test
 {
     public class ArtefactTests : TestBase
     {
-        private const string ArtefactName = "SomeArtefact";
-        private const string AnotherArtefactName = "AnotherArtefact";
-
         [Fact]
         public void AfterAddArtefactToSelf_SelfHasArtefact()
         {

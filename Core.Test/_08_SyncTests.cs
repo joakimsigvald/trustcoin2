@@ -166,18 +166,16 @@ namespace Trustcoin.Core.Test
         [InlineData(1, 0.1)]
         public void GivenMajorityOfPeersBelieveKnownArtefactHasDifferentOwner_WhenSync_ArtefactOwnerIsChanged(float otherTrust, float thirdTrust)
         {
-            var artefactName = "something";
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var artefact = ThirdActor.CreateArtefact(artefactName);
+            var artefact = ThirdActor.CreateArtefact(ArtefactName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)otherTrust);
             MyAccount.SetTrust(ThirdAccountName, (SignedWeight)thirdTrust);
-            MyAccount.RemoveArtefact(artefact);
-            MyAccount.AddArtefact(artefactName, MyAccountName);
+            MyAccount.MoveArtefact(artefact, MyAccountName);
 
             MyActor.SyncAll();
 
-            Assert.False(MyAccount.Self.HasArtefact(artefactName));
-            Assert.Equal(ThirdAccountName, MyAccount.GetArtefact(artefactName).OwnerName);
+            Assert.False(MyAccount.Self.HasArtefact(ArtefactName));
+            Assert.Equal(ThirdAccountName, MyAccount.GetArtefact(ArtefactName).OwnerName);
             Assert.Equal((SignedWeight)1, MyAccount.Self.Trust);
         }
 
@@ -186,18 +184,16 @@ namespace Trustcoin.Core.Test
         [InlineData(1, 0)]
         public void GivenMinorityOfPeersBelieveKnownArtefactHasDifferentOwner_WhenSync_ArtefactOwnerIsNotChanged(float otherTrust, float thirdTrust)
         {
-            var artefactName = "something";
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var artefact = ThirdActor.CreateArtefact(artefactName);
+            var artefact = ThirdActor.CreateArtefact(ArtefactName);
             MyAccount.SetTrust(OtherAccountName, (SignedWeight)otherTrust);
             MyAccount.SetTrust(ThirdAccountName, (SignedWeight)thirdTrust);
-            MyAccount.RemoveArtefact(artefact);
-            MyAccount.AddArtefact(artefactName, MyAccountName);
+            MyAccount.MoveArtefact(artefact, MyAccountName);
 
             MyActor.SyncAll();
 
-            Assert.True(MyAccount.Self.HasArtefact(artefactName));
-            Assert.Equal(MyAccountName, MyAccount.GetArtefact(artefactName).OwnerName);
+            Assert.True(MyAccount.Self.HasArtefact(ArtefactName));
+            Assert.Equal(MyAccountName, MyAccount.GetArtefact(ArtefactName).OwnerName);
         }
 
         [Theory]
@@ -205,12 +201,10 @@ namespace Trustcoin.Core.Test
         public void GivenMinorityOfPeersBelieveKnownArtefactHasDifferentOwner_WhenSync_TheyLooseTrust(float trustValueBefore)
         {
             var trustBefore = (SignedWeight)trustValueBefore;
-            var artefactName = "something";
             Interconnect(MyActor, OtherActor);
-            var artefact = OtherActor.CreateArtefact(artefactName);
+            var artefact = OtherActor.CreateArtefact(ArtefactName);
             MyAccount.SetTrust(OtherAccountName, trustBefore);
-            MyAccount.RemoveArtefact(artefact);
-            MyAccount.AddArtefact(artefactName, MyAccountName);
+            MyAccount.MoveArtefact(artefact, MyAccountName);
 
             MyActor.SyncAll();
 
@@ -219,16 +213,17 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void WhenSync_UnknownArtefactsAreNotSynched()
+        public void WhenSync_UnknownArtefactsAreSynched()
         {
-            var artefactName = "something";
             Interconnect(OtherActor, ThirdActor);
-            ThirdActor.CreateArtefact(artefactName);
+            ThirdActor.CreateArtefact(ArtefactName);
             Interconnect(MyActor, OtherActor, ThirdActor);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
 
             MyActor.SyncAll();
 
-            Assert.False(MyAccount.KnowsArtefact(artefactName));
+            Assert.True(MyAccount.KnowsArtefact(ArtefactName));
         }
     }
 }

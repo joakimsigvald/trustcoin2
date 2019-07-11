@@ -17,6 +17,7 @@ namespace Trustcoin.Core.Entities
 
         public SignedWeight Trust { get; set; }
         public Money Money { get; set; }
+        public IEnumerable<IArtefact> OwnedArtefacts => _artefacts.Values;
 
         public void Endorce()
         {

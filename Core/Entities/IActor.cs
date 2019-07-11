@@ -12,6 +12,8 @@
         void RenewKeys();
         void DestroyArtefact(string artefactName);
         void EndorceArtefact(IArtefact artefact);
+        string StartTransaction(string myAccountName, IArtefact artfact);
+        void AcceptTransaction(string transactionKey);
         IPeer ProducePeer(string name);
     }
 }

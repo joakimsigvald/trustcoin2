@@ -18,6 +18,8 @@ namespace Trustcoin.Core.Test
         protected const string MyAccountName = "MyAccount";
         protected const string OtherAccountName = "OtherAccount";
         protected const string ThirdAccountName = "ThirdAccount";
+        protected const string ArtefactName = "SomeArtefact";
+        protected const string AnotherArtefactName = "AnotherArtefact";
 
         protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {

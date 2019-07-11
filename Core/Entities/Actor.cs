@@ -88,6 +88,27 @@ namespace Trustcoin.Core.Entities
             OnDestroyArtefact(Account.GetArtefact(name));
         }
 
+        public string StartTransaction(string clientName, IArtefact artefact)
+        {
+            var transactionKey = Guid.NewGuid().ToString();
+            var transaction = new Transaction
+            {
+                Key = transactionKey,
+                Artefact = artefact,
+                ReceiverName = clientName
+            };
+            Account.AddPendingTransaction(transaction);
+            SendTransaction(ProducePeer(clientName), transaction);
+            return transactionKey;
+        }
+
+        public void AcceptTransaction(string transactionKey)
+        {
+            var transaction = Account.GetPendingTransaction(transactionKey);
+            Account.ClosePendingTransaction(transactionKey);
+            OnTransactionAccepted(transaction);
+        }
+
         private void SyncPeer(IPeer peer)
         {
             Sync(new[] { peer.Name }, new string[0]);
@@ -99,6 +120,10 @@ namespace Trustcoin.Core.Entities
             SyncMoney(peerUpdates);
             SyncArtefacts(peerUpdates);
         }
+
+        private IDictionary<IPeer, Update> GetPeerUpdates(string[] peersToUpdate, string[] artefactsToUpdate)
+            => TrustedPeers
+                .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
 
         private void SyncMoney(IDictionary<IPeer, Update> peerUpdates)
         {
@@ -120,15 +145,11 @@ namespace Trustcoin.Core.Entities
                     y => (target: x.Key, subject: y.Key, owner: y.Value)))
                 .GroupBy(iu => iu.subject)
                 .ToDictionary(
-                g => Account.GetArtefact(g.Key),
+                g => Account.ProduceArtefact(g.Key),
                 g => g.Select(x => (x.target, x.owner)).ToArray());
             foreach (var kvp in artefactAssessments)
                 SyncArtefact(kvp.Key, kvp.Value);
         }
-
-        private IDictionary<IPeer, Update> GetPeerUpdates(string[] peersToUpdate, string[] artefactsToUpdate)
-            => TrustedPeers
-                .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
 
         private IEnumerable<IPeer> TrustedPeers => Account.Peers.Where(p => p.Trust > 0);
 
@@ -141,19 +162,13 @@ namespace Trustcoin.Core.Entities
         {
             var newOwnerName = ComputeOwner(subject, assessments);
             if (newOwnerName != subject.OwnerName)
-                MoveArtefact(subject, newOwnerName);
+                Account.MoveArtefact(subject, newOwnerName);
             assessments
                 .Where(a => a.owner != newOwnerName)
                 .Select(a => a.target)
                 .Except(new[] { Account.Self})
                 .ToList()
                 .ForEach(p => p.DecreaseTrust(HoldCounterfeitArtefactDistrustFactor));
-        }
-
-        private void MoveArtefact(IArtefact artefact, string toPeerName)
-        {
-            Account.RemoveArtefact(artefact);
-            Account.AddArtefact(artefact.Name, toPeerName);
         }
 
         private Money ComputeMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
@@ -213,11 +228,23 @@ namespace Trustcoin.Core.Entities
             SendAction(new EndorceArtefactAction(artefact));
         }
 
+        private void OnTransactionAccepted(Transaction transaction)
+        {
+            SendAction(new AcceptTransationAction(transaction));
+        }
+
         private void SendAction(IAction action)
         {
             var signedAction = Account.Sign(action);
             foreach (var peer in Account.Peers)
                 _network.SendAction(peer.Name, Account.Name, signedAction);
+        }
+
+        private void SendTransaction(IPeer peer, Transaction transaction)
+        {
+            var action = new StartTransationAction(transaction);
+            var signedAction = Account.Sign(action);
+            _network.SendAction(peer.Name, Account.Name, signedAction);
         }
     }
 }
