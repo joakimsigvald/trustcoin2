@@ -7,5 +7,6 @@ namespace Trustcoin.Core.Entities
     {
         bool Update(string subjectName, SignedAction action);
         Update RequestUpdate(string[] subjectNames, string[] artefactNames);
+        bool? Verify(Transaction transaction);
     }
 }

@@ -1,4 +1,5 @@
 using System.Linq;
+using Trustcoin.Core.Entities;
 using Trustcoin.Core.Types;
 using Xunit;
 using static Trustcoin.Core.Entities.Constants;
@@ -125,27 +126,27 @@ namespace Trustcoin.Core.Test
         {
             var peers = peerTrusts
                 .Select((pt, i) => _network
-                .CreateAccount($"Peer{i}").GetActor(_network))
+                .CreateAccount($"Peer{i}").GetActor(_network, new TransactionFactory()))
                 .ToArray();
             int i = 0;
             var peerToUpdate = peers[0];
             foreach (var peer in peers)
             {
                 Interconnect(MyActor, peer);
-                MyAccount.SetTrust(peer.Name, (SignedWeight)peerTrusts[i]);
+                MyAccount.SetTrust(peer.Account.Name, (SignedWeight)peerTrusts[i]);
                 var peerAssessment = peerAssessments[i];
                 if (peerAssessment >= 0)
                 {
                     Interconnect(peer, peerToUpdate);
-                    peer.Account.SetMoney(peerToUpdate.Name, (Money)peerAssessments[i]);
+                    peer.Account.SetMoney(peerToUpdate.Account.Name, (Money)peerAssessments[i]);
                 }
                 i++;
             }
-            MyAccount.SetMoney(peerToUpdate.Name, (Money)peerMoneyBefore);
+            MyAccount.SetMoney(peerToUpdate.Account.Name, (Money)peerMoneyBefore);
 
             MyActor.SyncAll();
 
-            Assert.Equal(peerMoneyAfter, MyAccount.GetMoney(peerToUpdate.Name));
+            Assert.Equal(peerMoneyAfter, MyAccount.GetMoney(peerToUpdate.Account.Name));
         }
 
         [Fact]

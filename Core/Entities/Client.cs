@@ -73,26 +73,6 @@ namespace Trustcoin.Core.Entities
             }
         }
 
-        private void WhenAcceptTransaction(AcceptTransationAction action)
-        {
-            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
-                return;
-            _actor.Account.MoveArtefact(
-                action.Transaction.Artefact, 
-                _actor.ProducePeer(action.Transaction.ReceiverName).Name);
-            _actor.Account.AddReceivedTransaction(action.Transaction.Key);
-            if (_actor.Account.HasPendingTransaction(action.Transaction.Key))
-            {
-                _actor.AcceptTransaction(action.Transaction.Key);
-                _actor.Account.ClosePendingTransaction(action.Transaction.Key);
-            }
-        }
-
-        private void WhenStartTransaction(StartTransationAction action)
-        {
-            _actor.Account.AddTransaction(action.Transaction);
-        }
-
         private void WhenRenewKey(IPeer peer, RenewKeyAction ra)
         {
             if (peer.PublicKey.SequenceEqual(ra.NewKey))
@@ -154,6 +134,41 @@ namespace Trustcoin.Core.Entities
                 peer.DecreaseTrust(DestroyOthersArtefactDistrustFactor);
         }
 
+        private void WhenStartTransaction(StartTransationAction action)
+        {
+            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
+                return;
+            _actor.Account.AddTransaction(action.Transaction);
+        }
+
+        private void WhenAcceptTransaction(AcceptTransationAction action)
+        {
+            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
+                return;
+            _actor.Account.AddReceivedTransaction(action.Transaction.Key);
+            if (Verify(action.Transaction) ?? true)
+                AccountTransaction(action);
+            else
+                RejectTransaction(action);
+        }
+
+        private void AccountTransaction(AcceptTransationAction action)
+        {
+            _actor.Account.MoveArtefact(
+                action.Transaction.Artefact,
+                _actor.ProducePeer(action.Transaction.ReceiverName).Name);
+            _actor.Account.IncreaseTrust(action.Transaction.ReceiverName, AccountedTransactionTrustFactor);
+            _actor.Account.IncreaseTrust(action.Transaction.Artefact.OwnerName, AccountedTransactionTrustFactor);
+            if (_actor.Account.HasPendingTransaction(action.Transaction.Key))
+                _actor.RelayTransactionAccepted(action.Transaction);
+        }
+
+        private void RejectTransaction(AcceptTransationAction action)
+        {
+            _actor.Account.DecreaseTrust(action.Transaction.ReceiverName, UnaccountedTransactionDistrustFactor);
+            _actor.Account.DecreaseTrust(action.Transaction.Artefact.OwnerName, UnaccountedTransactionDistrustFactor);
+        }
+
         private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation, float factor = 1)
         {
             if (!_actor.Account.IsConnectedTo(relation.Agent.Name))
@@ -167,5 +182,10 @@ namespace Trustcoin.Core.Entities
         private Relation ProduceRelation(IPeer source, string targetName)
             => source.GetRelation(targetName)
                 ?? source.AddRelation(_network.FindAgent(targetName));
+
+        public bool? Verify(Transaction transaction)
+            => !_actor.Account.KnowsArtefact(transaction.Artefact.Name)
+            ? (bool?)null
+            : _actor.Account.GetArtefact(transaction.Artefact.Name).OwnerName == transaction.Artefact.OwnerName;
     }
 }

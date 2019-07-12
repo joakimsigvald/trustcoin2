@@ -9,5 +9,6 @@ namespace Trustcoin.Core.Infrastructure
         IAgent FindAgent(string name);
         bool SendAction(string targetName, string sourceName, SignedAction action);
         Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames);
+        bool? RequestVerification(string targetName, Transaction transaction);
     }
 }

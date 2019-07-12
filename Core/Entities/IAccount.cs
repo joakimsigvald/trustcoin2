@@ -34,8 +34,8 @@ namespace Trustcoin.Core.Entities
         void AddArtefact(string artefactName, string ownerName);
         void MoveArtefact(IArtefact artefact, string ownerName);
         SignedAction Sign(IAction action);
-        IClient GetClient(INetwork network);
-        IActor GetActor(INetwork network);
+        IClient GetClient(INetwork network, ITransactionFactory transactionFactory);
+        IActor GetActor(INetwork network, ITransactionFactory transactionFactory);
         IArtefact ProduceArtefact(string name);
 
         Transaction GetPendingTransaction(string key);

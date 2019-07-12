@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
@@ -114,11 +113,11 @@ namespace Trustcoin.Core.Entities
         public SignedAction Sign(IAction action)
             => _cryptography.Sign(action);
 
-        public IClient GetClient(INetwork network)
-            => new Client(network, GetActor(network));
+        public IClient GetClient(INetwork network, ITransactionFactory transactionFactory)
+            => new Client(network, GetActor(network, transactionFactory));
 
-        public IActor GetActor(INetwork network)
-            => new Actor(network, this);
+        public IActor GetActor(INetwork network, ITransactionFactory transactionFactory)
+            => new Actor(network, this, transactionFactory);
 
         public void MoveArtefact(IArtefact artefact, string ownerName)
         {

@@ -10,7 +10,10 @@ namespace Trustcoin.Core.Entities
         public static readonly Weight HoldCounterfeitArtefactDistrustFactor = (Weight)0.1f;
         public static readonly Weight EndorceCounterfeitArtefactDistrustFactor = (Weight)0.1f;
         public static readonly Weight DestroyOthersArtefactDistrustFactor = (Weight)0.2f;
+        public static readonly Weight UnaccountedTransactionDistrustFactor = (Weight)0.1f;
+        public static readonly Weight AccountedTransactionTrustFactor = (Weight)0.01f;
 
         public const float ArtefactMoneyFactor = 0.01f;
+        public const float TransactionAcceptanceLimit = 3;
     }
 }

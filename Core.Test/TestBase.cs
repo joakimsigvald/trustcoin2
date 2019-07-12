@@ -27,15 +27,16 @@ namespace Trustcoin.Core.Test
             MyAccount = _network.CreateAccount(MyAccountName);
             OtherAccount = _network.CreateAccount(OtherAccountName);
             ThirdAccount = _network.CreateAccount(ThirdAccountName);
-            MyActor = MyAccount.GetActor(_network);
-            OtherActor = OtherAccount.GetActor(_network);
-            ThirdActor = ThirdAccount.GetActor(_network);
+            var transactionFactory = new TransactionFactory();
+            MyActor = MyAccount.GetActor(_network, transactionFactory);
+            OtherActor = OtherAccount.GetActor(_network, transactionFactory);
+            ThirdActor = ThirdAccount.GetActor(_network, transactionFactory);
         }
 
         protected void Interconnect(params IActor[] actors)
         {
-            var agentNames = actors.Select(actor => actor.Name).ToList();
-            agentNames.ForEach(name => ConnectFrom(name, actors.Where(acc => acc.Name != name)));
+            var agentNames = actors.Select(actor => actor.Account.Name).ToList();
+            agentNames.ForEach(name => ConnectFrom(name, actors.Where(acc => acc.Account.Name != name)));
         }
 
         private void ConnectFrom(string agentName, IEnumerable<IActor> actors)

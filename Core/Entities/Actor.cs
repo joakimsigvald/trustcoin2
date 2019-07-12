@@ -11,15 +11,15 @@ namespace Trustcoin.Core.Entities
     public class Actor : IActor
     {
         private readonly INetwork _network;
+        private readonly ITransactionFactory _transactionFactory;
         public IAccount Account { get; }
 
-        public Actor(INetwork network, IAccount account)
+        public Actor(INetwork network, IAccount account, ITransactionFactory transactionFactory)
         {
             _network = network;
             Account = account;
+            _transactionFactory = transactionFactory;
         }
-
-        public string Name => Account.Name;
 
         public IPeer ProducePeer(string name)
             => Account.IsConnectedTo(name) ? Account.GetPeer(name) : Connect(name);
@@ -90,7 +90,7 @@ namespace Trustcoin.Core.Entities
 
         public string StartTransaction(string clientName, IArtefact artefact)
         {
-            var transactionKey = Guid.NewGuid().ToString();
+            var transactionKey = _transactionFactory.CreateTransactionKey();
             var transaction = new Transaction
             {
                 Key = transactionKey,
@@ -102,11 +102,24 @@ namespace Trustcoin.Core.Entities
             return transactionKey;
         }
 
-        public void AcceptTransaction(string transactionKey)
+        public bool AcceptTransaction(string transactionKey)
         {
+            if (!Account.HasPendingTransaction(transactionKey))
+                return false;
             var transaction = Account.GetPendingTransaction(transactionKey);
-            Account.ClosePendingTransaction(transactionKey);
+            if (!Verify(transaction))
+                return false;
+                Account.ClosePendingTransaction(transactionKey);
             OnTransactionAccepted(transaction);
+            return true;
+        }
+
+        private bool Verify(Transaction transaction)
+        {
+            var peerVerifications = GetPeerVerifications(transaction);
+            var acceptWeight = peerVerifications.Where(pv => pv.verification).Sum(pv => pv.peer.Trust);
+            var notAcceptWeight = peerVerifications.Where(pv => !pv.verification).Sum(pv => pv.peer.Trust);
+            return acceptWeight >= TransactionAcceptanceLimit * notAcceptWeight;
         }
 
         private void SyncPeer(IPeer peer)
@@ -124,6 +137,13 @@ namespace Trustcoin.Core.Entities
         private IDictionary<IPeer, Update> GetPeerUpdates(string[] peersToUpdate, string[] artefactsToUpdate)
             => TrustedPeers
                 .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
+
+        private IList<(IPeer peer, bool verification)> GetPeerVerifications(Transaction transaction)
+            => TrustedPeers
+            .Select(peer => (peer, verification: GetVerificationFromPeer(peer, transaction)))
+            .Where(pv => pv.verification.HasValue)
+            .Select(pv => (pv.peer, verification: pv.verification.Value))
+                .ToArray();
 
         private void SyncMoney(IDictionary<IPeer, Update> peerUpdates)
         {
@@ -198,6 +218,10 @@ namespace Trustcoin.Core.Entities
                 peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray(),
                 artefactsToUpdate);
 
+        private bool? GetVerificationFromPeer(IPeer peer, Transaction transaction)
+            => _network.RequestVerification(
+                peer.Name, transaction);
+
         private void OnAddedConnection(string agentName)
         {
             SendAction(new ConnectAction(agentName));
@@ -226,6 +250,12 @@ namespace Trustcoin.Core.Entities
         private void OnEndorcedArtefact(IArtefact artefact)
         {
             SendAction(new EndorceArtefactAction(artefact));
+        }
+
+        public void RelayTransactionAccepted(Transaction transaction)
+        {
+            OnTransactionAccepted(transaction);
+            Account.ClosePendingTransaction(transaction.Key);
         }
 
         private void OnTransactionAccepted(Transaction transaction)
