@@ -26,13 +26,41 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void CanCreateAccount()
+        public void NetworkCanCreateRootAccounts()
         {
-            const string accountName = "SomeName";
-            Assert.Null(_network.FindAgent(accountName));
-            _network.CreateAccount(accountName);
-            Assert.NotNull(_network.FindAgent(accountName));
+            const string firstName = "FirstName";
+            const string secondName = "SecondName";
+            Assert.Null(_network.FindAgent(firstName));
+            Assert.Null(_network.FindAgent(secondName));
+
+            _network.CreateRootAccount(firstName, 10);
+            _network.CreateRootAccount(secondName, 11);
+            var first = _network.FindAgent(firstName);
+            var second = _network.FindAgent(secondName);
+            Assert.NotNull(first);
+            Assert.NotNull(second);
+            Assert.Equal("10", first.Id);
+            Assert.Equal("11", second.Id);
         }
+
+        [Fact]
+        public void ActorCanCreateAccounts()
+        {
+            const string firstName = "FirstName";
+            const string secondName = "SecondName";
+            Assert.Null(_network.FindAgent(firstName));
+            Assert.Null(_network.FindAgent(secondName));
+
+            MyActor.CreateAccount(firstName);
+            MyActor.CreateAccount(secondName);
+            var first = _network.FindAgent(firstName);
+            var second = _network.FindAgent(secondName);
+            Assert.NotNull(first);
+            Assert.NotNull(second);
+            Assert.Equal(MyActor.Account.Id + ".1", first.Id);
+            Assert.Equal(MyActor.Account.Id + ".2", second.Id);
+        }
+
         [Fact]
         public void Account_Self_IsSameAsAccount()
         {

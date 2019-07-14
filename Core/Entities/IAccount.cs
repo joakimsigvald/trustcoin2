@@ -12,6 +12,8 @@ namespace Trustcoin.Core.Entities
         string Name { get; }
         IPeer Self { get; }
         byte[] PublicKey { get; }
+        string Id { get; }
+
         bool IsConnectedTo(string name);
         IPeer GetPeer(string name);
         SignedWeight GetTrust(string name);
@@ -29,7 +31,7 @@ namespace Trustcoin.Core.Entities
         void VerifySignature(SignedAction signedAction, IPeer peer);
         bool KnowsArtefact(string name);
         void RememberArtefact(IArtefact artefact);
-
+        IAccount CreateChild(string name);
         void RemoveArtefact(IArtefact artefact);
         void AddArtefact(string artefactName, string ownerName);
         void MoveArtefact(IArtefact artefact, string ownerName);

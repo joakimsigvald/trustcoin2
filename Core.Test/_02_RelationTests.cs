@@ -89,5 +89,27 @@ namespace Trustcoin.Core.Test
 
             Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName));
         }
+
+        [Fact]
+        public void AfterICreatedChild_ChildIsConnectedToMe()
+        {
+            const string childName = "child";
+            Interconnect(MyActor, OtherActor);
+
+            var newAccount = MyActor.CreateAccount(childName);
+
+            Assert.True(newAccount.IsConnectedTo(MyAccountName));
+        }
+
+        [Fact]
+        public void WhenPeerCreateChild_IConnectWithChild()
+        {
+            const string childName = "child";
+            Interconnect(MyActor, OtherActor);
+
+            OtherActor.CreateAccount(childName);
+
+            Assert.True(OtherAccount.IsConnectedTo(childName));
+        }
     }
 }

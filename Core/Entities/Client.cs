@@ -67,6 +67,9 @@ namespace Trustcoin.Core.Entities
                 case AcceptTransationAction ata:
                     WhenAcceptTransaction(ata);
                     break;
+                case CreateChildAction cca:
+                    WhenCreateChild(cca);
+                    break;
                 case NoAction _:
                     break;
                 default: throw new NotImplementedException("Action not implemented: " + action);
@@ -150,6 +153,11 @@ namespace Trustcoin.Core.Entities
                 AccountTransaction(action);
             else
                 RejectTransaction(action);
+        }
+
+        private void WhenCreateChild(CreateChildAction action)
+        {
+            _actor.Connect(action.Agent.Name);
         }
 
         private void AccountTransaction(AcceptTransationAction action)

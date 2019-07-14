@@ -10,8 +10,8 @@ namespace Trustcoin.Core.Entities
     {
         private readonly IDictionary<string, IArtefact> _artefacts = new Dictionary<string, IArtefact>();
 
-        internal Peer(string name, byte[] publicKey, IEnumerable<Relation> relations)
-            : base(name, publicKey, relations)
+        internal Peer(string name, string id, byte[] publicKey, IEnumerable<Relation> relations)
+            : base(name, id, publicKey, relations)
         {
         }
 

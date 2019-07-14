@@ -10,21 +10,24 @@ namespace Trustcoin.Core.Entities
 {
     public class Account : IAccount
     {
+        private readonly List<IAgent> _children = new List<IAgent>();
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
         private readonly IDictionary<string, Transaction> _pendingTransactions = new Dictionary<string, Transaction>();
         private readonly IDictionary<string, IArtefact> _knownArtefacts = new Dictionary<string, IArtefact>();
         private readonly ICryptography _cryptography;
         private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
-        public Account(ICryptography cryptography, string name)
+        public Account(ICryptography cryptography, string name, string id)
         {
             _cryptography = cryptography;
             Name = name;
+            Id = id;
             Self = CreateSelf();
             SetRelationWeight(Name, Name, Weight.Max);
         }
 
-        public string Name { get; private set; }
+        public string Name { get; }
+        public string Id { get; }
         public ICollection<IArtefact> Artefacts => _knownArtefacts.Values;
         public byte[] PublicKey => _cryptography.PublicKey;
 
@@ -34,6 +37,14 @@ namespace Trustcoin.Core.Entities
             => name == Name || (name != null && _peers.ContainsKey(name));
 
         public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
+
+        public IAccount CreateChild(string name)
+        {
+            var number = _children.Count + 1;
+            var child = new Account(_cryptography, name, $"{Id}.{number}");
+            _children.Add(child.Self);
+            return child;
+        }
 
         public bool KnowsArtefact(string name)
             => _knownArtefacts.ContainsKey(name);
@@ -97,7 +108,7 @@ namespace Trustcoin.Core.Entities
 
         private IPeer CreateSelf()
         {
-            var self = new Peer(Name, PublicKey, _peers.Values.Select(p => p.AsRelation()))
+            var self = new Peer(Name, Id, PublicKey, _peers.Values.Select(p => p.AsRelation()))
             {
                 Trust = SignedWeight.Max,
             };

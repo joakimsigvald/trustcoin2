@@ -35,6 +35,16 @@ namespace Trustcoin.Core.Entities
             return newPeer;
         }
 
+        public IAccount CreateAccount(string name)
+        {
+            var child = Account.CreateChild(name);
+            _network.AddAccount(child);
+            OnChildCreated(child.Self);
+            var actor = new Actor(_network, child, _transactionFactory);
+            actor.Connect(Account.Name);
+            return child;
+        }
+
         public void Endorce(string name)
         {
             ProducePeer(name).Endorce();
@@ -261,6 +271,11 @@ namespace Trustcoin.Core.Entities
         private void OnTransactionAccepted(Transaction transaction)
         {
             SendAction(new AcceptTransationAction(transaction));
+        }
+
+        private void OnChildCreated(IAgent child)
+        {
+            SendAction(new CreateChildAction(child));
         }
 
         private void SendAction(IAction action)

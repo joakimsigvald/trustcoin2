@@ -14,5 +14,6 @@
         bool AcceptTransaction(string transactionKey);
         IPeer ProducePeer(string name);
         void RelayTransactionAccepted(Transaction transaction);
+        IAccount CreateAccount(string firstName);
     }
 }

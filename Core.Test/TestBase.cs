@@ -21,16 +21,17 @@ namespace Trustcoin.Core.Test
         protected const string ArtefactName = "SomeArtefact";
         protected const string AnotherArtefactName = "AnotherArtefact";
 
+        protected ITransactionFactory _transactionFactory = new TransactionFactory();
+
         protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {
             _network = new Network(cryptographyFactory ?? new SimpleCryptographyFactory());
-            MyAccount = _network.CreateAccount(MyAccountName);
-            OtherAccount = _network.CreateAccount(OtherAccountName);
-            ThirdAccount = _network.CreateAccount(ThirdAccountName);
-            var transactionFactory = new TransactionFactory();
-            MyActor = MyAccount.GetActor(_network, transactionFactory);
-            OtherActor = OtherAccount.GetActor(_network, transactionFactory);
-            ThirdActor = ThirdAccount.GetActor(_network, transactionFactory);
+            MyAccount = _network.CreateRootAccount(MyAccountName, 1);
+            OtherAccount = _network.CreateRootAccount(OtherAccountName, 2);
+            ThirdAccount = _network.CreateRootAccount(ThirdAccountName, 3);
+            MyActor = MyAccount.GetActor(_network, _transactionFactory);
+            OtherActor = OtherAccount.GetActor(_network, _transactionFactory);
+            ThirdActor = ThirdAccount.GetActor(_network, _transactionFactory);
         }
 
         protected void Interconnect(params IActor[] actors)

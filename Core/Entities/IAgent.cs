@@ -7,10 +7,13 @@ namespace Trustcoin.Core.Entities
         string Name { get; }
         byte[] PublicKey { get; set; }
         ICollection<Relation> Relations { get; }
+        string Id { get; }
+
         bool IsConnectedTo(string targetName);
         IAgent Clone();
         Relation GetRelation(string agentName);
         Relation AddRelation(IAgent agent);
         IPeer AsPeer();
+        int GetDistance(IAgent target);
     }
 }

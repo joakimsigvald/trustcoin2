@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
@@ -7,18 +8,29 @@ namespace Trustcoin.Core.Infrastructure
 {
     public class Network : INetwork
     {
-        private readonly IDictionary<string, Account> _accounts = new Dictionary<string, Account>();
+        private readonly IDictionary<string, IAccount> _accounts = new Dictionary<string, IAccount>();
         private readonly ICryptographyFactory _cryptographyFactory;
         private readonly ITransactionFactory _transactionFactory = new TransactionFactory();
+        private readonly ILookupService _lookupService = new LookupService();
 
         public Network(ICryptographyFactory cryptographyFactory)
             => _cryptographyFactory = cryptographyFactory;
 
-        public IAccount CreateAccount(string name)
-            => _accounts[name] = new Account(_cryptographyFactory.CreateCryptography(), name);
+        public IAccount CreateRootAccount(string name, int number)
+        {
+            var account = new Account(_cryptographyFactory.CreateCryptography(), name, $"{number}");
+            AddAccount(account);
+            return account;
+        }
+
+        public void AddAccount(IAccount account)
+        {
+            _accounts[account.Name] = account;
+            _lookupService.Add(account.Self);
+        }
 
         public IAgent FindAgent(string name)
-            => _accounts.TryGetValue(name, out var account) ? new Agent(account) : null;
+            => _lookupService.FindByName(name);
 
         public Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames)
         {
@@ -37,5 +49,7 @@ namespace Trustcoin.Core.Infrastructure
             var targetClient = _accounts[targetName].GetClient(this, _transactionFactory);
             return targetClient.Update(subjectName, action.Clone());
         }
+
+        public ILookupService GetLookupService() => _lookupService;
     }
 }
