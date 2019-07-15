@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
-using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Infrastructure
 {
@@ -17,9 +15,9 @@ namespace Trustcoin.Core.Infrastructure
         public Network(ICryptographyFactory cryptographyFactory)
             => _cryptographyFactory = cryptographyFactory;
 
-        public IAccount CreateRootAccount(string name, int number)
+        public IAccount CreateRootAccount(string name, byte number)
         {
-            var account = new Account(_cryptographyFactory.CreateCryptography(), name, (AgentId)$"{number}");
+            var account = new Account(_cryptographyFactory.CreateCryptography(), name, number);
             AddAccount(account);
             return account;
         }

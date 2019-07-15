@@ -17,7 +17,12 @@ namespace Trustcoin.Core.Entities
         private readonly ICryptography _cryptography;
         private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
-        public Account(ICryptography cryptography, string name, AgentId id)
+        public Account(ICryptography cryptography, string name, byte number)
+            : this(cryptography, name, new AgentId(number))
+        {
+        }
+
+        private Account(ICryptography cryptography, string name, AgentId id)
         {
             _cryptography = cryptography;
             Name = name;

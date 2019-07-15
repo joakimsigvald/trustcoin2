@@ -126,7 +126,7 @@ namespace Trustcoin.Core.Test
         {
             var peers = peerTrusts
                 .Select((pt, i) => _network
-                .CreateRootAccount($"Peer{i}", 10 + i)
+                .CreateRootAccount($"Peer{i}", (byte)(10 + i))
                 .GetActor(_network, new TransactionFactory()))
                 .ToArray();
             int i = 0;

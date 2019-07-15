@@ -5,7 +5,7 @@ namespace Trustcoin.Core.Infrastructure
 {
     public interface INetwork
     {
-        IAccount CreateRootAccount(string name, int number);
+        IAccount CreateRootAccount(string name, byte number);
         void AddAccount(IAccount account);
         IAgent FindAgent(string name);
         ILookupService GetLookupService();
