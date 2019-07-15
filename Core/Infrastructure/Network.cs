@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
+using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Infrastructure
 {
@@ -18,7 +19,7 @@ namespace Trustcoin.Core.Infrastructure
 
         public IAccount CreateRootAccount(string name, int number)
         {
-            var account = new Account(_cryptographyFactory.CreateCryptography(), name, $"{number}");
+            var account = new Account(_cryptographyFactory.CreateCryptography(), name, (AgentId)$"{number}");
             AddAccount(account);
             return account;
         }
@@ -30,7 +31,7 @@ namespace Trustcoin.Core.Infrastructure
         }
 
         public IAgent FindAgent(string name)
-            => _lookupService.FindByName(name);
+            => _lookupService.Find(name);
 
         public Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames)
         {

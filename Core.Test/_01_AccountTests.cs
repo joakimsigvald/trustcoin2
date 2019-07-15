@@ -1,6 +1,7 @@
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
 using Trustcoin.Core.Exceptions;
+using Trustcoin.Core.Types;
 using Xunit;
 
 namespace Trustcoin.Core.Test
@@ -39,8 +40,8 @@ namespace Trustcoin.Core.Test
             var second = _network.FindAgent(secondName);
             Assert.NotNull(first);
             Assert.NotNull(second);
-            Assert.Equal("10", first.Id);
-            Assert.Equal("11", second.Id);
+            Assert.Equal((AgentId)"10", first.Id);
+            Assert.Equal((AgentId)"11", second.Id);
         }
 
         [Fact]
@@ -57,8 +58,8 @@ namespace Trustcoin.Core.Test
             var second = _network.FindAgent(secondName);
             Assert.NotNull(first);
             Assert.NotNull(second);
-            Assert.Equal(MyActor.Account.Id + ".1", first.Id);
-            Assert.Equal(MyActor.Account.Id + ".2", second.Id);
+            Assert.Equal(MyActor.Account.Id + 1, first.Id);
+            Assert.Equal(MyActor.Account.Id + 2, second.Id);
         }
 
         [Fact]

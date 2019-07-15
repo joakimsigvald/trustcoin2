@@ -17,7 +17,7 @@ namespace Trustcoin.Core.Entities
         private readonly ICryptography _cryptography;
         private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
-        public Account(ICryptography cryptography, string name, string id)
+        public Account(ICryptography cryptography, string name, AgentId id)
         {
             _cryptography = cryptography;
             Name = name;
@@ -27,7 +27,7 @@ namespace Trustcoin.Core.Entities
         }
 
         public string Name { get; }
-        public string Id { get; }
+        public AgentId Id { get; }
         public ICollection<IArtefact> Artefacts => _knownArtefacts.Values;
         public byte[] PublicKey => _cryptography.PublicKey;
 
@@ -40,8 +40,8 @@ namespace Trustcoin.Core.Entities
 
         public IAccount CreateChild(string name)
         {
-            var number = _children.Count + 1;
-            var child = new Account(_cryptography, name, $"{Id}.{number}");
+            var number = (byte)(_children.Count + 1);
+            var child = new Account(_cryptography, name, Id + number);
             _children.Add(child.Self);
             return child;
         }

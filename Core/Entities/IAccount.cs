@@ -12,7 +12,7 @@ namespace Trustcoin.Core.Entities
         string Name { get; }
         IPeer Self { get; }
         byte[] PublicKey { get; }
-        string Id { get; }
+        AgentId Id { get; }
 
         bool IsConnectedTo(string name);
         IPeer GetPeer(string name);

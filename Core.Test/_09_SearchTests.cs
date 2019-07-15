@@ -1,5 +1,6 @@
 using Trustcoin.Core.Entities;
 using Trustcoin.Core.Infrastructure;
+using Trustcoin.Core.Types;
 using Xunit;
 
 namespace Trustcoin.Core.Test
@@ -40,53 +41,35 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void CanFindAgentById()
         {
-            Assert.Same(a.Self, _lookupService.FindById("1.1"));
-            Assert.Same(b.Self, _lookupService.FindById("1.2"));
-            Assert.Same(c.Self, _lookupService.FindById("1.3"));
-            Assert.Same(aa.Self, _lookupService.FindById("1.1.1"));
-            Assert.Same(ab.Self, _lookupService.FindById("1.1.2"));
-            Assert.Same(ac.Self, _lookupService.FindById("1.1.3"));
-            Assert.Same(ba.Self, _lookupService.FindById("1.2.1"));
-            Assert.Same(bb.Self, _lookupService.FindById("1.2.2"));
-            Assert.Same(bc.Self, _lookupService.FindById("1.2.3"));
-            Assert.Same(ca.Self, _lookupService.FindById("1.3.1"));
-            Assert.Same(cb.Self, _lookupService.FindById("1.3.2"));
-            Assert.Same(cc.Self, _lookupService.FindById("1.3.3"));
+            Assert.Same(a.Self, _lookupService.Find((AgentId)"1.1"));
+            Assert.Same(b.Self, _lookupService.Find((AgentId)"1.2"));
+            Assert.Same(c.Self, _lookupService.Find((AgentId)"1.3"));
+            Assert.Same(aa.Self, _lookupService.Find((AgentId)"1.1.1"));
+            Assert.Same(ab.Self, _lookupService.Find((AgentId)"1.1.2"));
+            Assert.Same(ac.Self, _lookupService.Find((AgentId)"1.1.3"));
+            Assert.Same(ba.Self, _lookupService.Find((AgentId)"1.2.1"));
+            Assert.Same(bb.Self, _lookupService.Find((AgentId)"1.2.2"));
+            Assert.Same(bc.Self, _lookupService.Find((AgentId)"1.2.3"));
+            Assert.Same(ca.Self, _lookupService.Find((AgentId)"1.3.1"));
+            Assert.Same(cb.Self, _lookupService.Find((AgentId)"1.3.2"));
+            Assert.Same(cc.Self, _lookupService.Find((AgentId)"1.3.3"));
         }
 
         [Fact]
         public void CanFindAgentByName()
         {
-            Assert.Same(a.Self, _lookupService.FindByName("A"));
-            Assert.Same(b.Self, _lookupService.FindByName("B"));
-            Assert.Same(c.Self, _lookupService.FindByName("C"));
-            Assert.Same(aa.Self, _lookupService.FindByName("AA"));
-            Assert.Same(ab.Self, _lookupService.FindByName("AB"));
-            Assert.Same(ac.Self, _lookupService.FindByName("AC"));
-            Assert.Same(ba.Self, _lookupService.FindByName("BA"));
-            Assert.Same(bb.Self, _lookupService.FindByName("BB"));
-            Assert.Same(bc.Self, _lookupService.FindByName("BC"));
-            Assert.Same(ca.Self, _lookupService.FindByName("CA"));
-            Assert.Same(cb.Self, _lookupService.FindByName("CB"));
-            Assert.Same(cc.Self, _lookupService.FindByName("CC"));
-        }
-
-        [Theory]
-        [InlineData("1", "1", 0)]
-        [InlineData("1", "2", 1)]
-        [InlineData("1", "3", 2)]
-        [InlineData("1", "1.1", 1)]
-        [InlineData("1.2", "1", 1)]
-        [InlineData("1", "1.2.3", 2)]
-        [InlineData("1.1.2", "1.2.2", 3)]
-        [InlineData("2", "1.3.3", 3)]
-        [InlineData("1.1.1", "1.3.3", 4)]
-        public void CanGetDistance(string sourceId, string targetId, int expectedDistance)
-        {
-            var source = _lookupService.FindById(sourceId);
-            var target = _lookupService.FindById(targetId);
-
-            Assert.Equal(expectedDistance, source.GetDistance(target));
+            Assert.Same(a.Self, _lookupService.Find("A"));
+            Assert.Same(b.Self, _lookupService.Find("B"));
+            Assert.Same(c.Self, _lookupService.Find("C"));
+            Assert.Same(aa.Self, _lookupService.Find("AA"));
+            Assert.Same(ab.Self, _lookupService.Find("AB"));
+            Assert.Same(ac.Self, _lookupService.Find("AC"));
+            Assert.Same(ba.Self, _lookupService.Find("BA"));
+            Assert.Same(bb.Self, _lookupService.Find("BB"));
+            Assert.Same(bc.Self, _lookupService.Find("BC"));
+            Assert.Same(ca.Self, _lookupService.Find("CA"));
+            Assert.Same(cb.Self, _lookupService.Find("CB"));
+            Assert.Same(cc.Self, _lookupService.Find("CC"));
         }
 
         private IAccount CreateAccount(IAccount parent, string name) 
