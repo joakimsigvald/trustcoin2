@@ -5,13 +5,13 @@ using Trustcoin.Core.Entities;
 namespace Trustcoin.Core.Actions
 {
     [Serializable]
-    public class DestroyArtefactAction : ArtefactAction
+    public abstract class NewAgentAction : ActionBase<NewAgent, INewAgent>
     {
-        public DestroyArtefactAction(Artefact artefact) : base(artefact)
+        public NewAgentAction(INewAgent agent) : base(agent)
         {
         }
 
-        protected DestroyArtefactAction(SerializationInfo info, StreamingContext context)
+        protected NewAgentAction(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

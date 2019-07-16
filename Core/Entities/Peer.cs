@@ -8,7 +8,7 @@ namespace Trustcoin.Core.Entities
 {
     public class Peer : Agent, IPeer
     {
-        private readonly IDictionary<string, IArtefact> _artefacts = new Dictionary<string, IArtefact>();
+        private readonly IDictionary<string, Artefact> _artefacts = new Dictionary<string, Artefact>();
 
         internal Peer(string name, AgentId id, byte[] publicKey, IEnumerable<Relation> relations)
             : base(name, id, publicKey, relations)
@@ -17,14 +17,14 @@ namespace Trustcoin.Core.Entities
 
         public SignedWeight Trust { get; set; }
         public Money Money { get; set; }
-        public IEnumerable<IArtefact> OwnedArtefacts => _artefacts.Values;
+        public IEnumerable<Artefact> OwnedArtefacts => _artefacts.Values;
 
         public void Endorce()
         {
             Trust = Trust.Increase(EndorcementTrustFactor);
         }
 
-        public void AddArtefact(IArtefact artefact)
+        public void AddArtefact(Artefact artefact)
         {
             if (HasArtefact(artefact.Name))
                 throw new DuplicateKey<string>(artefact.Name);
@@ -33,7 +33,7 @@ namespace Trustcoin.Core.Entities
             _artefacts.Add(artefact.Name, artefact);
         }
 
-        public void RemoveArtefact(IArtefact artefact)
+        public void RemoveArtefact(Artefact artefact)
         {
             _artefacts.Remove(artefact.Name);
         }
@@ -41,9 +41,19 @@ namespace Trustcoin.Core.Entities
         public bool HasArtefact(string name)
             => _artefacts.ContainsKey(name);
 
-        public IArtefact GetArtefact(string name)
+        public Artefact GetArtefact(string name)
             => _artefacts.TryGetValue(name, out var artefact)
             ? artefact
-            : throw new NotFound<IArtefact>(name);
+            : throw new NotFound<Artefact>(name);
+
+        public void IncreaseMoney(Money money)
+        {
+            Money += money;
+        }
+
+        public void DecreaseMoney(Money money)
+        {
+            Money -= money;
+        }
     }
 }

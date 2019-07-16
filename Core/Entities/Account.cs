@@ -13,7 +13,7 @@ namespace Trustcoin.Core.Entities
         private readonly List<IAgent> _children = new List<IAgent>();
         private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
         private readonly IDictionary<string, Transaction> _pendingTransactions = new Dictionary<string, Transaction>();
-        private readonly IDictionary<string, IArtefact> _knownArtefacts = new Dictionary<string, IArtefact>();
+        private readonly IDictionary<string, Artefact> _knownArtefacts = new Dictionary<string, Artefact>();
         private readonly ICryptography _cryptography;
         private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
@@ -33,7 +33,7 @@ namespace Trustcoin.Core.Entities
 
         public string Name { get; }
         public AgentId Id { get; }
-        public ICollection<IArtefact> Artefacts => _knownArtefacts.Values;
+        public ICollection<Artefact> Artefacts => _knownArtefacts.Values;
         public byte[] PublicKey => _cryptography.PublicKey;
 
         public IPeer Self { get; }
@@ -54,12 +54,12 @@ namespace Trustcoin.Core.Entities
         public bool KnowsArtefact(string name)
             => _knownArtefacts.ContainsKey(name);
 
-        public IArtefact ProduceArtefact(string name)
+        public Artefact ProduceArtefact(string name)
             => _knownArtefacts.TryGetValue(name, out var artefact) 
             ? artefact 
             : new Artefact(name, null);
 
-        public IArtefact GetArtefact(string name)
+        public Artefact GetArtefact(string name)
             => _knownArtefacts[name];
 
         public void ForgetArtefact(string name)
@@ -79,6 +79,10 @@ namespace Trustcoin.Core.Entities
 
         public Money GetMoney(string name) => GetPeer(name).Money;
         public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
+        public void IncreaseMoney(string name, Money money) 
+            => GetPeer(name).IncreaseMoney(money);
+        public void DecreaseMoney(string name, Money money) 
+            => GetPeer(name).DecreaseMoney(money);
 
         public void SetRelationWeight(string subjectName, string objectName, Weight value)
         {
@@ -101,7 +105,7 @@ namespace Trustcoin.Core.Entities
 
         public override string ToString() => Name;
 
-        public void RememberArtefact(IArtefact artefact)
+        public void RememberArtefact(Artefact artefact)
         {
             _knownArtefacts.Add(artefact.Name, artefact);
         }
@@ -135,13 +139,13 @@ namespace Trustcoin.Core.Entities
         public IActor GetActor(INetwork network, ITransactionFactory transactionFactory)
             => new Actor(network, this, transactionFactory);
 
-        public void MoveArtefact(IArtefact artefact, string ownerName)
+        public void MoveArtefact(Artefact artefact, string ownerName)
         {
             RemoveArtefact(artefact);
             AddArtefact(artefact.Name, ownerName);
         }
 
-        public void RemoveArtefact(IArtefact artefact)
+        public void RemoveArtefact(Artefact artefact)
         {
             ForgetArtefact(artefact.Name);
             if (IsConnectedTo(artefact.OwnerName))

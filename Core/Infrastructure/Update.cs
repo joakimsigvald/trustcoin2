@@ -7,7 +7,7 @@ namespace Trustcoin.Core.Infrastructure
 {
     public class Update
     {
-        public Update(IEnumerable<IPeer> peers, IEnumerable<IArtefact> artefacts)
+        public Update(IEnumerable<IPeer> peers, IEnumerable<Artefact> artefacts)
         {
             PeerMoney = peers.ToDictionary(p => p.Name, p => p.Money);
             ArtefactOwners = artefacts

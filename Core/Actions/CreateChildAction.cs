@@ -5,9 +5,9 @@ using Trustcoin.Core.Entities;
 namespace Trustcoin.Core.Actions
 {
     [Serializable]
-    public class CreateChildAction : AgentAction
+    public class CreateChildAction : NewAgentAction
     {
-        public CreateChildAction(IAgent child) : base(child)
+        public CreateChildAction(INewAgent child) : base(child)
         {
         }
 

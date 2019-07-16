@@ -7,7 +7,7 @@ namespace Trustcoin.Core.Actions
     [Serializable]
     public class CreateArtefactAction : ArtefactAction
     {
-        public CreateArtefactAction(IArtefact artefact) : base(artefact)
+        public CreateArtefactAction(Artefact artefact) : base(artefact)
         {
         }
 

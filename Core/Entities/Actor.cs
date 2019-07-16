@@ -39,7 +39,7 @@ namespace Trustcoin.Core.Entities
         {
             var child = Account.CreateChild(name);
             _network.AddAccount(child);
-            OnChildCreated(child.Self);
+            OnChildCreated(new NewAgent(child));
             var actor = new Actor(_network, child, _transactionFactory);
             actor.Connect(Account.Name);
             return child;
@@ -51,7 +51,7 @@ namespace Trustcoin.Core.Entities
             OnEndorcedAgent(name);
         }
 
-        public void EndorceArtefact(IArtefact artefact)
+        public void EndorceArtefact(Artefact artefact)
         {
             if (artefact.OwnerName is null)
                 throw new ArgumentException("Tried to endorce artefact without owner");
@@ -84,7 +84,7 @@ namespace Trustcoin.Core.Entities
                 Account.Artefacts.Select(a => a.Name).ToArray());
         }
 
-        public IArtefact CreateArtefact(string name)
+        public Artefact CreateArtefact(string name)
         {
             var artefact = new Artefact(name, Account.Name);
             OnCreatedArtefact(artefact);
@@ -98,14 +98,42 @@ namespace Trustcoin.Core.Entities
             OnDestroyArtefact(Account.GetArtefact(name));
         }
 
-        public string StartTransaction(string clientName, IArtefact artefact)
+        public string StartTransaction(string clientName, Artefact artefact)
         {
             var transactionKey = _transactionFactory.CreateTransactionKey();
             var transaction = new Transaction
             {
                 Key = transactionKey,
-                Artefact = artefact,
-                ReceiverName = clientName
+                Transfers = new[] 
+                {
+                    new Transfer
+                    {
+                        Artefacts = new [] { artefact},
+                        ReceiverName = clientName,
+                        GiverName = Account.Name
+                    }
+                }
+            };
+            Account.AddPendingTransaction(transaction);
+            SendTransaction(ProducePeer(clientName), transaction);
+            return transactionKey;
+        }
+
+        public string StartTransaction(string clientName, Money money)
+        {
+            var transactionKey = _transactionFactory.CreateTransactionKey();
+            var transaction = new Transaction
+            {
+                Key = transactionKey,
+                Transfers = new[]
+                {
+                    new Transfer
+                    {
+                        Money = money,
+                        ReceiverName = clientName,
+                        GiverName = Account.Name
+                    }
+                }
             };
             Account.AddPendingTransaction(transaction);
             SendTransaction(ProducePeer(clientName), transaction);
@@ -122,6 +150,12 @@ namespace Trustcoin.Core.Entities
                 Account.ClosePendingTransaction(transactionKey);
             OnTransactionAccepted(transaction);
             return true;
+        }
+
+        public void RelayTransactionAccepted(Transaction transaction)
+        {
+            OnTransactionAccepted(transaction);
+            Account.ClosePendingTransaction(transaction.Key);
         }
 
         private bool Verify(Transaction transaction)
@@ -188,7 +222,7 @@ namespace Trustcoin.Core.Entities
             subject.Money = ComputeMoney(totalTrust, subject, assessments);
         }
 
-        private void SyncArtefact(IArtefact subject, (IPeer target, string owner)[] assessments)
+        private void SyncArtefact(Artefact subject, (IPeer target, string owner)[] assessments)
         {
             var newOwnerName = ComputeOwner(subject, assessments);
             if (newOwnerName != subject.OwnerName)
@@ -209,7 +243,7 @@ namespace Trustcoin.Core.Entities
             return weightedMeanAssessment;
         }
 
-        private string ComputeOwner(IArtefact subject, (IPeer target, string owner)[] assessments)
+        private string ComputeOwner(Artefact subject, (IPeer target, string owner)[] assessments)
         {
             var sumOfTrusts = assessments.Sum(a => a.target.Trust);
             var halfTrust = sumOfTrusts / 2;
@@ -247,25 +281,19 @@ namespace Trustcoin.Core.Entities
             SendAction(new EndorceAction(agentName));
         }
 
-        private void OnCreatedArtefact(IArtefact artefact)
+        private void OnCreatedArtefact(Artefact artefact)
         {
             SendAction(new CreateArtefactAction(artefact));
         }
 
-        private void OnDestroyArtefact(IArtefact artefact)
+        private void OnDestroyArtefact(Artefact artefact)
         {
             SendAction(new DestroyArtefactAction(artefact));
         }
 
-        private void OnEndorcedArtefact(IArtefact artefact)
+        private void OnEndorcedArtefact(Artefact artefact)
         {
             SendAction(new EndorceArtefactAction(artefact));
-        }
-
-        public void RelayTransactionAccepted(Transaction transaction)
-        {
-            OnTransactionAccepted(transaction);
-            Account.ClosePendingTransaction(transaction.Key);
         }
 
         private void OnTransactionAccepted(Transaction transaction)
@@ -273,7 +301,7 @@ namespace Trustcoin.Core.Entities
             SendAction(new AcceptTransationAction(transaction));
         }
 
-        private void OnChildCreated(IAgent child)
+        private void OnChildCreated(INewAgent child)
         {
             SendAction(new CreateChildAction(child));
         }

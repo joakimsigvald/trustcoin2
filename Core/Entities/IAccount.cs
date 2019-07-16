@@ -8,7 +8,7 @@ namespace Trustcoin.Core.Entities
     public interface IAccount
     {
         IEnumerable<IPeer> Peers { get; }
-        ICollection<IArtefact> Artefacts { get; }
+        ICollection<Artefact> Artefacts { get; }
         string Name { get; }
         IPeer Self { get; }
         byte[] PublicKey { get; }
@@ -26,19 +26,19 @@ namespace Trustcoin.Core.Entities
         void AddPeer(IPeer newPeer);
         Money GetMoney(string name);
         void SetMoney(string name, Money money);
-        IArtefact GetArtefact(string name);
+        Artefact GetArtefact(string name);
         void ForgetArtefact(string name);
         void VerifySignature(SignedAction signedAction, IPeer peer);
         bool KnowsArtefact(string name);
-        void RememberArtefact(IArtefact artefact);
+        void RememberArtefact(Artefact artefact);
         IAccount CreateChild(string name);
-        void RemoveArtefact(IArtefact artefact);
+        void RemoveArtefact(Artefact artefact);
         void AddArtefact(string artefactName, string ownerName);
-        void MoveArtefact(IArtefact artefact, string ownerName);
+        void MoveArtefact(Artefact artefact, string ownerName);
         SignedAction Sign(IAction action);
         IClient GetClient(INetwork network, ITransactionFactory transactionFactory);
         IActor GetActor(INetwork network, ITransactionFactory transactionFactory);
-        IArtefact ProduceArtefact(string name);
+        Artefact ProduceArtefact(string name);
 
         Transaction GetPendingTransaction(string key);
         void AddTransaction(Transaction action);
@@ -47,5 +47,7 @@ namespace Trustcoin.Core.Entities
         bool HasReceivedTransaction(string key);
         void AddPendingTransaction(Transaction transaction);
         void AddReceivedTransaction(string key);
+        void IncreaseMoney(string name, Money money);
+        void DecreaseMoney(string name, Money money);
     }
 }

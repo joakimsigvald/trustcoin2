@@ -101,11 +101,11 @@ namespace Trustcoin.Core.Entities
 
         private void WhenEndorceArtefact(IPeer peer, ArtefactAction action)
         {
-            var artefact = action.Artefact;
-            if (_actor.Account.KnowsArtefact(action.Artefact.Name))
+            var artefact = action.Model;
+            if (_actor.Account.KnowsArtefact(action.Model.Name))
             {
                 artefact = _actor.Account.GetArtefact(artefact.Name);
-                if (artefact.OwnerName != action.Artefact.OwnerName)
+                if (artefact.OwnerName != action.Model.OwnerName)
                 {
                     peer.DecreaseTrust(EndorceCounterfeitArtefactDistrustFactor);
                     return;
@@ -121,35 +121,35 @@ namespace Trustcoin.Core.Entities
 
         private void WhenCreateArtefact(IPeer peer, ArtefactAction action)
         {
-            if (peer.HasArtefact(action.Artefact.Name))
+            if (peer.HasArtefact(action.Model.Name))
                 return;
-            if (_actor.Account.KnowsArtefact(action.Artefact.Name))
+            if (_actor.Account.KnowsArtefact(action.Model.Name))
                 peer.DecreaseTrust(MakeCounterfeitArtefactDistrustFactor);
             else
-                _actor.Account.AddArtefact(action.Artefact.Name, peer.Name);
+                _actor.Account.AddArtefact(action.Model.Name, peer.Name);
         }
 
         private void WhenDestroyArtefact(IPeer peer, ArtefactAction action)
         {
-            if (peer.HasArtefact(action.Artefact.Name))
-                _actor.Account.RemoveArtefact(action.Artefact);
+            if (peer.HasArtefact(action.Model.Name))
+                _actor.Account.RemoveArtefact(action.Model);
             else
                 peer.DecreaseTrust(DestroyOthersArtefactDistrustFactor);
         }
 
         private void WhenStartTransaction(StartTransationAction action)
         {
-            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
+            if (_actor.Account.HasReceivedTransaction(action.Model.Key))
                 return;
-            _actor.Account.AddTransaction(action.Transaction);
+            _actor.Account.AddTransaction(action.Model);
         }
 
         private void WhenAcceptTransaction(AcceptTransationAction action)
         {
-            if (_actor.Account.HasReceivedTransaction(action.Transaction.Key))
+            if (_actor.Account.HasReceivedTransaction(action.Model.Key))
                 return;
-            _actor.Account.AddReceivedTransaction(action.Transaction.Key);
-            if (Verify(action.Transaction) ?? true)
+            _actor.Account.AddReceivedTransaction(action.Model.Key);
+            if (Verify(action.Model) ?? true)
                 AccountTransaction(action);
             else
                 RejectTransaction(action);
@@ -157,24 +157,45 @@ namespace Trustcoin.Core.Entities
 
         private void WhenCreateChild(CreateChildAction action)
         {
-            _actor.Connect(action.Agent.Name);
+            _actor.Connect(action.Model.Name);
         }
 
         private void AccountTransaction(AcceptTransationAction action)
         {
-            _actor.Account.MoveArtefact(
-                action.Transaction.Artefact,
-                _actor.ProducePeer(action.Transaction.ReceiverName).Name);
-            _actor.Account.IncreaseTrust(action.Transaction.ReceiverName, AccountedTransactionTrustFactor);
-            _actor.Account.IncreaseTrust(action.Transaction.Artefact.OwnerName, AccountedTransactionTrustFactor);
-            if (_actor.Account.HasPendingTransaction(action.Transaction.Key))
-                _actor.RelayTransactionAccepted(action.Transaction);
+            foreach (var transfer in action.Model.Transfers)
+                AccountTransfer(transfer);
+            if (_actor.Account.HasPendingTransaction(action.Model.Key))
+                _actor.RelayTransactionAccepted(action.Model);
+        }
+
+        private void AccountTransfer(Transfer transfer)
+        {
+            if (transfer.Artefacts != null)
+                AccountArtefactTransfer(transfer.Artefacts, transfer.ReceiverName);
+            if (transfer.Money > 0f)
+                AccountMoneyTransfer(transfer.Money, transfer.GiverName, transfer.ReceiverName);
+            _actor.Account.IncreaseTrust(transfer.ReceiverName, AccountedTransactionTrustFactor);
+            _actor.Account.IncreaseTrust(transfer.GiverName, AccountedTransactionTrustFactor);
+        }
+
+        private void AccountArtefactTransfer(Artefact[] artefacts, string receiverName)
+        {
+            foreach (var artefact in artefacts)
+                _actor.Account.MoveArtefact(
+                    artefact,
+                    _actor.ProducePeer(receiverName).Name);
+        }
+
+        private void AccountMoneyTransfer(Money money, string giverName, string receiverName)
+        {
+            _actor.Account.DecreaseMoney(giverName, money);
+            _actor.Account.IncreaseMoney(receiverName, money);
         }
 
         private void RejectTransaction(AcceptTransationAction action)
         {
-            _actor.Account.DecreaseTrust(action.Transaction.ReceiverName, UnaccountedTransactionDistrustFactor);
-            _actor.Account.DecreaseTrust(action.Transaction.Artefact.OwnerName, UnaccountedTransactionDistrustFactor);
+            _actor.Account.DecreaseTrust(action.Model.Transfers[0].ReceiverName, UnaccountedTransactionDistrustFactor);
+            _actor.Account.DecreaseTrust(action.Model.Transfers[0].GiverName, UnaccountedTransactionDistrustFactor);
         }
 
         private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation, float factor = 1)
@@ -192,8 +213,32 @@ namespace Trustcoin.Core.Entities
                 ?? source.AddRelation(_network.FindAgent(targetName));
 
         public bool? Verify(Transaction transaction)
-            => !_actor.Account.KnowsArtefact(transaction.Artefact.Name)
+            => AggregateVerifications(transaction.Transfers.Select(Verify).ToArray());
+
+        private bool? Verify(Transfer transfer)
+            => AggregateVerifications(Verify(transfer.Artefacts, transfer.GiverName), Verify(transfer.Money, transfer.GiverName));
+
+        private bool? Verify(Artefact[] artefacts, string giverName)
+            => artefacts is null ? true
+            : artefacts.Any(a => a.OwnerName != giverName) ? false
+            : AggregateVerifications(artefacts.Select(Verify).ToArray());
+
+        private bool? Verify(Artefact artefact)
+            => !_actor.Account.KnowsArtefact(artefact.Name)
+                       ? (bool?)null
+                       : _actor.Account.GetArtefact(artefact.Name).OwnerName == artefact.OwnerName;
+
+        private bool? Verify(Money money, string giverName)
+            => money == 0f ? true
+            : _actor.Account.IsConnectedTo(giverName)
+            ? _actor.Account.GetMoney(giverName) >= money
+            : (bool?)null;
+
+        private bool? AggregateVerifications(params bool?[] verifications)
+            => verifications.Any(v => v == false)
+            ? false
+            : verifications.Any(v => v is null)
             ? (bool?)null
-            : _actor.Account.GetArtefact(transaction.Artefact.Name).OwnerName == transaction.Artefact.OwnerName;
+            : true;
     }
 }

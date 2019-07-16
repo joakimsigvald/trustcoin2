@@ -1,14 +1,14 @@
 ﻿namespace Trustcoin.Core.Entities
 {
-    public class Artefact : IArtefact
+    public class Artefact
     {
-        public string Name { get; }
-        public string OwnerName { get; }
-
         public Artefact(string name, string ownerName)
         {
             Name = name;
             OwnerName = ownerName;
         }
+
+        public string Name { get; }
+        public string OwnerName { get; }
     }
 }

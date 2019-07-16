@@ -121,9 +121,61 @@ namespace Trustcoin.Core.Test
             Assert.Equal(expectedThirdTrust, actualThirdTrust);
         }
 
-        private bool MakeTransaction(IActor giver, IActor receiver, IArtefact artefact)
+        [Theory]
+        [InlineData(0.5, 0.5, true)] // 75% acceept
+        [InlineData(1, 0.66, true)] // > 75% acceept
+        [InlineData(0.51, 0.51, false)] // < 75% accept
+        public void ThreeOfFourPeersMustAgree_ForTransactionToBeAccepted(
+            float acceptingPeerTrust, float rejectingPeerTrust, bool transactionAccepted)
+        {
+            var someMoney = (Money)100;
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)acceptingPeerTrust);
+            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)rejectingPeerTrust);
+            MyAccount.SetMoney(OtherAccountName, someMoney);
+            OtherAccount.SetMoney(OtherAccountName, someMoney);
+
+            Assert.Equal(0f, MyAccount.GetMoney(MyAccountName));
+            Assert.Equal(0f, OtherAccount.GetMoney(MyAccountName));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyAccountName));
+            Assert.Equal(someMoney, MyAccount.GetMoney(OtherAccountName));
+            Assert.Equal(someMoney, OtherAccount.GetMoney(OtherAccountName));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyAccountName));
+
+            Assert.Equal(transactionAccepted, MakeTransaction(OtherActor, MyActor, someMoney));
+
+            if (!transactionAccepted) return;
+            Assert.Equal(someMoney, MyAccount.GetMoney(MyAccountName));
+            Assert.Equal(someMoney, OtherAccount.GetMoney(MyAccountName));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyAccountName));
+            Assert.Equal(0f, MyAccount.GetMoney(OtherAccountName));
+            Assert.Equal(0f, OtherAccount.GetMoney(OtherAccountName));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyAccountName));
+        }
+
+        [Fact]
+        public void IfTwoOfThreePeersAgreeGiverHasMoney_ItCannotBeAcceptedAndIsNotAccounted()
+        {
+            Interconnect(MyActor, OtherActor);
+            var artefact = OtherActor.CreateArtefact(ArtefactName);
+            ThirdActor.CreateArtefact(ArtefactName);
+            Interconnect(MyActor, OtherActor, ThirdActor);
+            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
+
+            Assert.False(MakeTransaction(OtherActor, MyActor, artefact));
+            Assert.False(MyAccount.Self.HasArtefact(ArtefactName));
+        }
+
+        private bool MakeTransaction(IActor giver, IActor receiver, Artefact artefact)
         {
             var key = giver.StartTransaction(receiver.Account.Name, artefact);
+            return receiver.AcceptTransaction(key);
+        }
+
+        private bool MakeTransaction(IActor giver, IActor receiver, Money money)
+        {
+            var key = giver.StartTransaction(receiver.Account.Name, money);
             return receiver.AcceptTransaction(key);
         }
     }
