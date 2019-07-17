@@ -27,9 +27,9 @@ namespace Trustcoin.Core.Test
             float myMoneyBefore, float peerAssessment, float myMoneyAfter)
         {
             Interconnect(MyActor, OtherActor);
-            OtherAccount.SetMoney(MyAccountName, (Money)peerAssessment);
+            OtherAccount.SetMoney(MyName, (Money)peerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(OtherName, (SignedWeight)1);
 
             MyActor.SyncAll();
 
@@ -47,11 +47,11 @@ namespace Trustcoin.Core.Test
             float myMoneyAfter)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
-            ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
+            OtherAccount.SetMoney(MyName, (Money)firstPeerAssessment);
+            ThirdAccount.SetMoney(MyName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
-            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(OtherName, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdName, (SignedWeight)1);
 
             MyActor.SyncAll();
 
@@ -72,15 +72,15 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor);
             MyAccount.Self.Money = (Money)mySelfMoneyBefore;
-            MyAccount.SetMoney(OtherAccountName, (Money)myPeerMoneyBefore);
+            MyAccount.SetMoney(OtherName, (Money)myPeerMoneyBefore);
             OtherAccount.Self.Money = (Money)peerSelfMoneyBefore;
-            OtherAccount.SetMoney(MyAccountName, (Money)peerMyMoneyBefore);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
+            OtherAccount.SetMoney(MyName, (Money)peerMyMoneyBefore);
+            MyAccount.SetTrust(OtherName, (SignedWeight)1);
 
             MyActor.SyncAll();
 
             Assert.Equal(mySelfMoneyAfter, MyAccount.Self.Money);
-            Assert.Equal(myPeerMoneyAfter, MyAccount.GetMoney(OtherAccountName));
+            Assert.Equal(myPeerMoneyAfter, MyAccount.GetMoney(OtherName));
         }
 
         [Theory]
@@ -97,11 +97,11 @@ namespace Trustcoin.Core.Test
             float myMoneyAfter)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            OtherAccount.SetMoney(MyAccountName, (Money)firstPeerAssessment);
-            ThirdAccount.SetMoney(MyAccountName, (Money)secondPeerAssessment);
+            OtherAccount.SetMoney(MyName, (Money)firstPeerAssessment);
+            ThirdAccount.SetMoney(MyName, (Money)secondPeerAssessment);
             MyAccount.Self.Money = (Money)myMoneyBefore;
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)firstPeerTrust);
-            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)secondPeerTrust);
+            MyAccount.SetTrust(OtherName, (SignedWeight)firstPeerTrust);
+            MyAccount.SetTrust(ThirdName, (SignedWeight)secondPeerTrust);
 
             MyActor.SyncAll();
 
@@ -155,12 +155,12 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor);
             Interconnect(ThirdActor, OtherActor);
-            OtherAccount.SetMoney(ThirdAccountName, (Money)100);
-            MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
+            OtherAccount.SetMoney(ThirdName, (Money)100);
+            MyAccount.SetTrust(OtherName, SignedWeight.Max);
 
-            MyActor.Connect(ThirdAccountName);
+            MyActor.Connect(ThirdName);
 
-            Assert.Equal((Money)50, MyAccount.GetMoney(ThirdAccountName));
+            Assert.Equal((Money)50, MyAccount.GetMoney(ThirdName));
         }
 
         [Theory]
@@ -170,14 +170,14 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
             var artefact = ThirdActor.CreateArtefact(ArtefactName);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)otherTrust);
-            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)thirdTrust);
-            MyAccount.MoveArtefact(artefact, MyAccountName);
+            MyAccount.SetTrust(OtherName, (SignedWeight)otherTrust);
+            MyAccount.SetTrust(ThirdName, (SignedWeight)thirdTrust);
+            MyAccount.MoveArtefact(artefact, MyName);
 
             MyActor.SyncAll();
 
             Assert.False(MyAccount.Self.HasArtefact(ArtefactName));
-            Assert.Equal(ThirdAccountName, MyAccount.GetArtefact(ArtefactName).OwnerName);
+            Assert.Equal(ThirdName, MyAccount.GetArtefact(ArtefactName).OwnerName);
             Assert.Equal((SignedWeight)1, MyAccount.Self.Trust);
         }
 
@@ -188,14 +188,14 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
             var artefact = ThirdActor.CreateArtefact(ArtefactName);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)otherTrust);
-            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)thirdTrust);
-            MyAccount.MoveArtefact(artefact, MyAccountName);
+            MyAccount.SetTrust(OtherName, (SignedWeight)otherTrust);
+            MyAccount.SetTrust(ThirdName, (SignedWeight)thirdTrust);
+            MyAccount.MoveArtefact(artefact, MyName);
 
             MyActor.SyncAll();
 
             Assert.True(MyAccount.Self.HasArtefact(ArtefactName));
-            Assert.Equal(MyAccountName, MyAccount.GetArtefact(ArtefactName).OwnerName);
+            Assert.Equal(MyName, MyAccount.GetArtefact(ArtefactName).OwnerName);
         }
 
         [Theory]
@@ -205,13 +205,13 @@ namespace Trustcoin.Core.Test
             var trustBefore = (SignedWeight)trustValueBefore;
             Interconnect(MyActor, OtherActor);
             var artefact = OtherActor.CreateArtefact(ArtefactName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
-            MyAccount.MoveArtefact(artefact, MyAccountName);
+            MyAccount.SetTrust(OtherName, trustBefore);
+            MyAccount.MoveArtefact(artefact, MyName);
 
             MyActor.SyncAll();
 
             var expectedTrust = trustBefore.Decrease(HoldCounterfeitArtefactDistrustFactor);
-            Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(expectedTrust, MyAccount.GetTrust(OtherName));
         }
 
         [Fact]
@@ -220,8 +220,8 @@ namespace Trustcoin.Core.Test
             Interconnect(OtherActor, ThirdActor);
             ThirdActor.CreateArtefact(ArtefactName);
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)1);
-            MyAccount.SetTrust(ThirdAccountName, (SignedWeight)1);
+            MyAccount.SetTrust(OtherName, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdName, (SignedWeight)1);
 
             MyActor.SyncAll();
 

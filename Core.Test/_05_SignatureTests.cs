@@ -22,7 +22,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AgentHasSameKeyAsAccount()
         {
-            Assert.Equal(MyAccount.PublicKey, _network.FindAgent(MyAccountName).PublicKey);
+            Assert.Equal(MyAccount.PublicKey, _network.FindAgent(MyName).PublicKey);
         }
 
         [Fact]
@@ -75,26 +75,26 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenRenewKeys_PeersAreUpdated()
         {
-            MyActor.Connect(OtherAccountName);
-            OtherActor.Connect(MyAccountName);
+            MyActor.Connect(OtherName);
+            OtherActor.Connect(MyName);
 
             MyActor.RenewKeys();
-            Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyAccountName).PublicKey);
+            Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyName).PublicKey);
         }
 
         [Fact]
         public void WhenUpdatedWithInvalidSignature_ThrowsInvalidOperationException()
         {
-            MyActor.Connect(OtherAccountName);
-            var otherAgent = _network.FindAgent(OtherAccountName);
+            MyActor.Connect(OtherName);
+            var otherAgent = _network.FindAgent(OtherName);
             Assert.Throws<InvalidOperationException>(
-                () => _network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
+                () => _network.SendAction(MyName, OtherName, _cryptography.Sign(new NoAction())));
         }
 
         [Fact]
         public void WhenUpdatedWithUnconnectedAgent_ReturnsFalse()
         {
-            Assert.False(_network.SendAction(MyAccountName, OtherAccountName, _cryptography.Sign(new NoAction())));
+            Assert.False(_network.SendAction(MyName, OtherName, _cryptography.Sign(new NoAction())));
         }
     }
 }

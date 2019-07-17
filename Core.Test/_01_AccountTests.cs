@@ -15,9 +15,9 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void CanFindAgentByName()
         {
-            var agent = _network.FindAgent(MyAccountName);
+            var agent = _network.FindAgent(MyName);
             Assert.NotNull(agent);
-            Assert.Equal(MyAccountName, agent.Name);
+            Assert.Equal(MyName, agent.Name);
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void CanGetSelfByName()
         {
-            Assert.NotNull(MyAccount.GetPeer(MyAccountName));
+            Assert.NotNull(MyAccount.GetPeer(MyName));
         }
 
         [Fact]

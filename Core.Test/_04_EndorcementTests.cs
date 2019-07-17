@@ -9,8 +9,8 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterEndorcedUnconnectedAgent_AgentIsPeer()
         {
-            MyActor.Endorce(OtherAccountName);
-            Assert.NotNull(MyAccount.GetPeer(OtherAccountName));
+            MyActor.Endorce(OtherName);
+            Assert.NotNull(MyAccount.GetPeer(OtherName));
         }
 
         [Fact]
@@ -18,10 +18,10 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor);
 
-            OtherActor.Endorce(ThirdAccountName);
+            OtherActor.Endorce(ThirdName);
 
             var expectedRelationWeight = Weight.Min.Increase(EndorcementTrustFactor);
-            var actualRelationWeight = MyAccount.GetPeer(OtherAccountName).GetRelation(ThirdAccountName).Strength;
+            var actualRelationWeight = MyAccount.GetPeer(OtherName).GetRelation(ThirdName).Strength;
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
 
@@ -32,12 +32,12 @@ namespace Trustcoin.Core.Test
         public void AfterEndorcedConnectedAgent_RelationIsIncreaseWithEndorcementFactor(float initialRelation)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)initialRelation);
+            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)initialRelation);
 
-            OtherActor.Endorce(ThirdAccountName);
+            OtherActor.Endorce(ThirdName);
 
             var expectedRelationWeight = ((Weight)initialRelation).Increase(EndorcementTrustFactor);
-            var actualRelationWeight = MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName);
+            var actualRelationWeight = MyAccount.GetRelationWeight(OtherName, ThirdName);
             Assert.Equal(expectedRelationWeight, actualRelationWeight);
         }
 
@@ -48,12 +48,12 @@ namespace Trustcoin.Core.Test
         public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
         {
             var trustBefore = (SignedWeight)trustValueBefore;
-            MyActor.Connect(OtherAccountName);
-            MyAccount.SetTrust(OtherAccountName, trustBefore);
+            MyActor.Connect(OtherName);
+            MyAccount.SetTrust(OtherName, trustBefore);
 
-            MyActor.Endorce(OtherAccountName);
+            MyActor.Endorce(OtherName);
 
-            Assert.Equal(trustBefore.Increase(EndorcementTrustFactor), MyAccount.GetTrust(OtherAccountName));
+            Assert.Equal(trustBefore.Increase(EndorcementTrustFactor), MyAccount.GetTrust(OtherName));
         }
     }
 }

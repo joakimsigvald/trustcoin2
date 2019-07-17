@@ -9,8 +9,8 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void NewPeerHas_0_Coins()
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.Equal((Money)0, MyAccount.GetPeer(OtherAccountName).Money);
+            MyActor.Connect(OtherName);
+            Assert.Equal((Money)0, MyAccount.GetPeer(OtherName).Money);
         }
 
         [Theory]
@@ -20,12 +20,12 @@ namespace Trustcoin.Core.Test
         [InlineData(2, 3, 3)]
         public void AfterSetMoney_PeerHasMoney(float initialMoney, float setMoney, float hasMoney)
         {
-            MyActor.Connect(OtherAccountName);
-            MyAccount.SetMoney(OtherAccountName, (Money)initialMoney);
+            MyActor.Connect(OtherName);
+            MyAccount.SetMoney(OtherName, (Money)initialMoney);
 
-            MyAccount.SetMoney(OtherAccountName, (Money)setMoney);
+            MyAccount.SetMoney(OtherName, (Money)setMoney);
 
-            Assert.Equal(hasMoney, MyAccount.GetMoney(OtherAccountName));
+            Assert.Equal(hasMoney, MyAccount.GetMoney(OtherName));
         }
 
         [Theory]
@@ -33,8 +33,8 @@ namespace Trustcoin.Core.Test
         [InlineData(-0.00001)]
         public void WhenSetNegativeMoney_ThrowsOutOfBounds(float setMoney)
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetMoney(OtherAccountName, (Money)setMoney));
+            MyActor.Connect(OtherName);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetMoney(OtherName, (Money)setMoney));
         }
 
         [Theory]
@@ -50,12 +50,12 @@ namespace Trustcoin.Core.Test
             float expectedIncrease)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
-            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
+            MyAccount.SetTrust(OtherName, (SignedWeight)trustForEndorcingPeer);
+            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherActor.Endorce(ThirdAccountName);
+            OtherActor.Endorce(ThirdName);
 
-            Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdAccountName));
+            Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdName));
         }
 
         [Theory]
@@ -71,10 +71,10 @@ namespace Trustcoin.Core.Test
             float expectedIncrease)
         {
             Interconnect(MyActor, OtherActor);
-            MyAccount.SetTrust(OtherAccountName, (SignedWeight)trustForEndorcingPeer);
-            MyAccount.SetRelationWeight(OtherAccountName, MyAccountName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
+            MyAccount.SetTrust(OtherName, (SignedWeight)trustForEndorcingPeer);
+            MyAccount.SetRelationWeight(OtherName, MyName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherActor.Endorce(MyAccountName);
+            OtherActor.Endorce(MyName);
             Assert.Equal(expectedIncrease, MyAccount.Self.Money);
         }
 
@@ -82,10 +82,10 @@ namespace Trustcoin.Core.Test
         public void WhenEndorcePeerManyTimes_MoneyIncreaseLessThanTwo()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherAccountName, SignedWeight.Max);
+            MyAccount.SetTrust(OtherName, SignedWeight.Max);
             for (int i = 0; i < 10; i++)
-                OtherActor.Endorce(ThirdAccountName);
-            Assert.InRange((float)MyAccount.GetMoney(ThirdAccountName), 0, 2);
+                OtherActor.Endorce(ThirdName);
+            Assert.InRange((float)MyAccount.GetMoney(ThirdName), 0, 2);
         }
     }
 }

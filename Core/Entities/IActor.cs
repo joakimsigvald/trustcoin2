@@ -12,7 +12,7 @@ namespace Trustcoin.Core.Entities
         void RenewKeys();
         void DestroyArtefact(string artefactName);
         void EndorceArtefact(Artefact artefact);
-        string StartTransaction(string clientName, Artefact artfact);
+        string StartTransaction(string clientName, params Transfer[] transfers);
         string StartTransaction(string clientName, Money money);
         bool AcceptTransaction(string transactionKey);
         IPeer ProducePeer(string name);

@@ -98,21 +98,13 @@ namespace Trustcoin.Core.Entities
             OnDestroyArtefact(Account.GetArtefact(name));
         }
 
-        public string StartTransaction(string clientName, Artefact artefact)
+        public string StartTransaction(string clientName, params Transfer[] transfers)
         {
             var transactionKey = _transactionFactory.CreateTransactionKey();
             var transaction = new Transaction
             {
                 Key = transactionKey,
-                Transfers = new[] 
-                {
-                    new Transfer
-                    {
-                        Artefacts = new [] { artefact},
-                        ReceiverName = clientName,
-                        GiverName = Account.Name
-                    }
-                }
+                Transfers = transfers
             };
             Account.AddPendingTransaction(transaction);
             SendTransaction(ProducePeer(clientName), transaction);
@@ -135,6 +127,8 @@ namespace Trustcoin.Core.Entities
                     }
                 }
             };
+            if (!Verify(transaction))
+                return null;
             Account.AddPendingTransaction(transaction);
             SendTransaction(ProducePeer(clientName), transaction);
             return transactionKey;
@@ -147,7 +141,7 @@ namespace Trustcoin.Core.Entities
             var transaction = Account.GetPendingTransaction(transactionKey);
             if (!Verify(transaction))
                 return false;
-                Account.ClosePendingTransaction(transactionKey);
+            Account.ClosePendingTransaction(transactionKey);
             OnTransactionAccepted(transaction);
             return true;
         }

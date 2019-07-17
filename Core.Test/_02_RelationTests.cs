@@ -8,8 +8,8 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void SelfIsConnectedToSelf()
         {
-            Assert.True(MyAccount.IsConnectedTo(MyAccountName));
-            Assert.True(MyAccount.Self.IsConnectedTo(MyAccountName));
+            Assert.True(MyAccount.IsConnectedTo(MyName));
+            Assert.True(MyAccount.Self.IsConnectedTo(MyName));
         }
 
         [Fact]
@@ -21,56 +21,56 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenConnectAgent_ItBecomesPeer()
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.NotNull(MyAccount.GetPeer(OtherAccountName));
+            MyActor.Connect(OtherName);
+            Assert.NotNull(MyAccount.GetPeer(OtherName));
         }
 
         [Fact]
         public void AfterIConnectWithAgent_IAmConnectedToAgent()
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.True(MyAccount.IsConnectedTo(OtherAccountName));
+            MyActor.Connect(OtherName);
+            Assert.True(MyAccount.IsConnectedTo(OtherName));
         }
 
         [Fact]
         public void AfterIConnectWithAgent_AgentIsNotConnectedToMe()
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.False(OtherAccount.IsConnectedTo(MyAccountName));
+            MyActor.Connect(OtherName);
+            Assert.False(OtherAccount.IsConnectedTo(MyName));
         }
 
         [Fact]
         public void AfterMyPeerConnectWithMe_IAmUpdatedOfPeerConnection()
         {
-            MyActor.Connect(OtherAccountName);
-            Assert.False(MyAccount.GetPeer(OtherAccountName).IsConnectedTo(MyAccountName));
-            OtherActor.Connect(MyAccountName);
-            Assert.True(MyAccount.GetPeer(OtherAccountName).IsConnectedTo(MyAccountName));
+            MyActor.Connect(OtherName);
+            Assert.False(MyAccount.GetPeer(OtherName).IsConnectedTo(MyName));
+            OtherActor.Connect(MyName);
+            Assert.True(MyAccount.GetPeer(OtherName).IsConnectedTo(MyName));
         }
 
         [Fact]
         public void AfterMyPeerConnectWithOtherAgent_IAmUpdateOfPeerConnection()
         {
-            MyActor.Connect(OtherAccountName);
-            OtherActor.Connect(MyAccountName);
+            MyActor.Connect(OtherName);
+            OtherActor.Connect(MyName);
 
-            MyActor.Connect(ThirdAccountName);
+            MyActor.Connect(ThirdName);
 
-            Assert.True(OtherAccount.GetPeer(MyAccountName).IsConnectedTo(ThirdAccountName));
+            Assert.True(OtherAccount.GetPeer(MyName).IsConnectedTo(ThirdName));
         }
 
         [Fact]
         public void AfterInterconnectedAgents_RelationStrengthsAre_Zero()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var otherToMe = MyAccount.GetPeer(OtherAccountName)
-                .GetRelation(MyAccountName);
-            var thirdToMe = MyAccount.GetPeer(ThirdAccountName)
-                .GetRelation(MyAccountName);
-            var otherToThird = MyAccount.GetPeer(OtherAccountName)
-                .GetRelation(ThirdAccountName);
-            var thirdToOther = MyAccount.GetPeer(ThirdAccountName)
-                .GetRelation(OtherAccountName);
+            var otherToMe = MyAccount.GetPeer(OtherName)
+                .GetRelation(MyName);
+            var thirdToMe = MyAccount.GetPeer(ThirdName)
+                .GetRelation(MyName);
+            var otherToThird = MyAccount.GetPeer(OtherName)
+                .GetRelation(ThirdName);
+            var thirdToOther = MyAccount.GetPeer(ThirdName)
+                .GetRelation(OtherName);
 
             Assert.Equal(0f, otherToMe.Strength);
             Assert.Equal(0f, thirdToMe.Strength);
@@ -85,9 +85,9 @@ namespace Trustcoin.Core.Test
         public void AccountCanSetAndGetRelationWeightForPeers(float setWeight)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetRelationWeight(OtherAccountName, ThirdAccountName, (Weight)setWeight);
+            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)setWeight);
 
-            Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherAccountName, ThirdAccountName));
+            Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherName, ThirdName));
         }
 
         [Fact]
@@ -98,7 +98,7 @@ namespace Trustcoin.Core.Test
 
             var newAccount = MyActor.CreateAccount(childName);
 
-            Assert.True(newAccount.IsConnectedTo(MyAccountName));
+            Assert.True(newAccount.IsConnectedTo(MyName));
         }
 
         [Fact]
