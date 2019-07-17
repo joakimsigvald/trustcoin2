@@ -9,15 +9,15 @@ namespace Trustcoin.Core.Test
     public class AccountTests : TestBase
     {
         private static readonly SimpleCryptographyFactory _cryptographyFactory = new SimpleCryptographyFactory();
+        private const string FirstName = "FirstName";
+        private const string SecondName = "SecondName";
 
         public AccountTests() : base(_cryptographyFactory) { }
 
         [Fact]
         public void CanFindAgentByName()
         {
-            var agent = _network.FindAgent(MyName);
-            Assert.NotNull(agent);
-            Assert.Equal(MyName, agent.Name);
+            Assert.Equal(MyName, _network.FindAgent(MyName)?.Name);
         }
 
         [Fact]
@@ -29,42 +29,33 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void NetworkCanCreateRootAccounts()
         {
-            const string firstName = "FirstName";
-            const string secondName = "SecondName";
-            Assert.Null(_network.FindAgent(firstName));
-            Assert.Null(_network.FindAgent(secondName));
+            Assert.Null(_network.FindAgent(FirstName));
+            Assert.Null(_network.FindAgent(SecondName));
 
-            _network.CreateRootAccount(firstName, 10);
-            _network.CreateRootAccount(secondName, 11);
-            var first = _network.FindAgent(firstName);
-            var second = _network.FindAgent(secondName);
-            Assert.NotNull(first);
-            Assert.NotNull(second);
-            Assert.Equal((AgentId)"10", first.Id);
-            Assert.Equal((AgentId)"11", second.Id);
+            _network.CreateRootAccount(FirstName, 10);
+            _network.CreateRootAccount(SecondName, 11);
+
+            Assert.Equal((AgentId)"10", _network.FindAgent(FirstName)?.Id);
+            Assert.Equal((AgentId)"11", _network.FindAgent(SecondName)?.Id);
         }
 
         [Fact]
         public void ActorCanCreateAccounts()
         {
-            const string firstName = "FirstName";
-            const string secondName = "SecondName";
-            Assert.Null(_network.FindAgent(firstName));
-            Assert.Null(_network.FindAgent(secondName));
+            Assert.Null(_network.FindAgent(FirstName));
+            Assert.Null(_network.FindAgent(SecondName));
 
-            MyActor.CreateAccount(firstName);
-            MyActor.CreateAccount(secondName);
-            var first = _network.FindAgent(firstName);
-            var second = _network.FindAgent(secondName);
-            Assert.NotNull(first);
-            Assert.NotNull(second);
-            Assert.Equal(MyActor.Account.Id + 1, first.Id);
-            Assert.Equal(MyActor.Account.Id + 2, second.Id);
+            MyActor.CreateAccount(FirstName);
+            MyActor.CreateAccount(SecondName);
+
+            Assert.Equal(MyActor.Account.Id + 1, _network.FindAgent(FirstName)?.Id);
+            Assert.Equal(MyActor.Account.Id + 2, _network.FindAgent(SecondName)?.Id);
         }
 
         [Fact]
         public void Account_Self_IsSameAsAccount()
         {
+            Assert.Equal(MyAccount.Id, MyAccount.Self.Id);
             Assert.Equal(MyAccount.Name, MyAccount.Self.Name);
         }
 

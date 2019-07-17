@@ -7,15 +7,17 @@ namespace Trustcoin.Core.Test
     public class TrustTests : TestBase
     {
         [Fact]
-        public void AfterConnectedAgent_TrustIs_BaseTrust()
+        public void AfterConnectedAgent_TrustIs_Zero()
         {
             MyActor.Connect(OtherName);
             Assert.Equal(0f, MyAccount.GetTrust(OtherName));
         }
 
         [Fact]
-        public void TrustOfSelf_Is_MaxTrust()
+        public void TrustOfSelf_IsAlways_MaxTrust()
         {
+            MyAccount.SetTrust(MyName, (SignedWeight)0);
+            MyAccount.DecreaseTrust(MyName, (Weight)1);
             Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
         }
 
@@ -94,12 +96,6 @@ namespace Trustcoin.Core.Test
             MyActor.Connect(OtherName);
             MyAccount.SetTrust(OtherName, (SignedWeight)trustBefore);
             Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherName, (Weight)factor));
-        }
-
-        [Fact]
-        public void Account_TrustForSelfIsMax()
-        {
-            Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
         }
     }
 }

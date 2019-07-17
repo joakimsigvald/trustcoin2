@@ -73,9 +73,12 @@ namespace Trustcoin.Core.Entities
             : throw new NotFound<IPeer>(name);
 
         public SignedWeight GetTrust(string name) => GetPeer(name).Trust;
-        public SignedWeight SetTrust(string name, SignedWeight trust) => GetPeer(name).Trust = trust;
-        public SignedWeight IncreaseTrust(string name, Weight factor) => GetPeer(name).IncreaseTrust(factor);
-        public SignedWeight DecreaseTrust(string name, Weight factor) => GetPeer(name).DecreaseTrust(factor);
+        public SignedWeight SetTrust(string name, SignedWeight trust) 
+            => GetPeer(name).Trust = name == Name ? SignedWeight.Max : trust;
+        public SignedWeight IncreaseTrust(string name, Weight factor) 
+            => name == Name ? SignedWeight.Max : GetPeer(name).IncreaseTrust(factor);
+        public SignedWeight DecreaseTrust(string name, Weight factor) 
+            => name == Name ? SignedWeight.Max : GetPeer(name).DecreaseTrust(factor);
 
         public Money GetMoney(string name) => GetPeer(name).Money;
         public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
@@ -86,6 +89,8 @@ namespace Trustcoin.Core.Entities
 
         public void SetRelationWeight(string subjectName, string objectName, Weight value)
         {
+            if (subjectName == objectName)
+                value = Weight.Max;
             var subject = GetPeer(subjectName);
             var relation = subject.GetRelation(objectName);
             relation.Strength = value;

@@ -28,11 +28,11 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void DifferentAccountsHaveDifferentPublicKeys()
         {
-            Assert.NotEqual(MyAccount.PublicKey, OtherAccount.PublicKey);
+            Assert.NotEqual(_network.CreateRootAccount("A", 10).PublicKey, _network.CreateRootAccount("B", 11).PublicKey);
         }
 
         [Fact]
-        public void CanCreateValidSignature()
+        public void CanCreateVerifyableSignature()
         {
             var payload = new byte[] { 1, 2, 3};
             var key = RSA.Create();
@@ -75,9 +75,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void WhenRenewKeys_PeersAreUpdated()
         {
-            MyActor.Connect(OtherName);
-            OtherActor.Connect(MyName);
-
+            Interconnect(MyActor, OtherActor);
             MyActor.RenewKeys();
             Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyName).PublicKey);
         }
@@ -89,6 +87,13 @@ namespace Trustcoin.Core.Test
             var otherAgent = _network.FindAgent(OtherName);
             Assert.Throws<InvalidOperationException>(
                 () => _network.SendAction(MyName, OtherName, _cryptography.Sign(new NoAction())));
+        }
+
+        [Fact]
+        public void CanSendActionToPeer()
+        {
+            Interconnect(MyActor, OtherActor);
+            Assert.True(_network.SendAction(OtherName, MyName, MyAccount.Sign(new NoAction())));
         }
 
         [Fact]

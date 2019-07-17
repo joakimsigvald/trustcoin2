@@ -7,10 +7,10 @@ namespace Trustcoin.Core.Test
     public class EndorcementTests : TestBase
     {
         [Fact]
-        public void AfterEndorcedUnconnectedAgent_AgentIsPeer()
+        public void AfterIEndorcedUnconnectedAgent_IAmConnectedToAgent()
         {
             MyActor.Endorce(OtherName);
-            Assert.NotNull(MyAccount.GetPeer(OtherName));
+            Assert.True(MyAccount.IsConnectedTo(OtherName));
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace Trustcoin.Core.Test
         [InlineData(0.1)]
         [InlineData(0.5)]
         [InlineData(-0.5)]
-        public void AfterEndorcedUnconnectedAgent_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
+        public void AfterIEndorcedPeer_TrustOfPeerIncreaseWithEndorcementFactor(float trustValueBefore)
         {
             var trustBefore = (SignedWeight)trustValueBefore;
             MyActor.Connect(OtherName);

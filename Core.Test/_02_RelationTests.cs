@@ -13,22 +13,18 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void SelfHasMaxRelationToSelf()
+        public void SelfAlwaysHasMaxRelationToSelf()
         {
+            MyAccount.SetRelationWeight(MyName, MyName, (Weight)0);
             Assert.Equal((Weight)1, MyAccount.Self.GetRelation(MyAccount.Name).Strength);
-        }
-
-        [Fact]
-        public void WhenConnectAgent_ItBecomesPeer()
-        {
-            MyActor.Connect(OtherName);
-            Assert.NotNull(MyAccount.GetPeer(OtherName));
         }
 
         [Fact]
         public void AfterIConnectWithAgent_IAmConnectedToAgent()
         {
             MyActor.Connect(OtherName);
+
+            Assert.NotNull(MyAccount.GetPeer(OtherName));
             Assert.True(MyAccount.IsConnectedTo(OtherName));
         }
 
@@ -37,57 +33,44 @@ namespace Trustcoin.Core.Test
         {
             MyActor.Connect(OtherName);
             Assert.False(OtherAccount.IsConnectedTo(MyName));
+            Assert.False(MyAccount.GetPeer(OtherName).IsConnectedTo(MyName));
         }
 
         [Fact]
         public void AfterMyPeerConnectWithMe_IAmUpdatedOfPeerConnection()
         {
             MyActor.Connect(OtherName);
-            Assert.False(MyAccount.GetPeer(OtherName).IsConnectedTo(MyName));
             OtherActor.Connect(MyName);
             Assert.True(MyAccount.GetPeer(OtherName).IsConnectedTo(MyName));
         }
 
         [Fact]
-        public void AfterMyPeerConnectWithOtherAgent_IAmUpdateOfPeerConnection()
+        public void AfterMyPeerConnectWithOtherAgent_IAmUpdatedOfPeerConnection()
         {
-            MyActor.Connect(OtherName);
-            OtherActor.Connect(MyName);
-
-            MyActor.Connect(ThirdName);
-
-            Assert.True(OtherAccount.GetPeer(MyName).IsConnectedTo(ThirdName));
+            Interconnect(MyActor, OtherActor);
+            OtherActor.Connect(ThirdName);
+            Assert.True(MyAccount.GetPeer(OtherName).IsConnectedTo(ThirdName));
         }
 
         [Fact]
         public void AfterInterconnectedAgents_RelationStrengthsAre_Zero()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var otherToMe = MyAccount.GetPeer(OtherName)
-                .GetRelation(MyName);
-            var thirdToMe = MyAccount.GetPeer(ThirdName)
-                .GetRelation(MyName);
-            var otherToThird = MyAccount.GetPeer(OtherName)
-                .GetRelation(ThirdName);
-            var thirdToOther = MyAccount.GetPeer(ThirdName)
-                .GetRelation(OtherName);
 
-            Assert.Equal(0f, otherToMe.Strength);
-            Assert.Equal(0f, thirdToMe.Strength);
-            Assert.Equal(0f, otherToThird.Strength);
-            Assert.Equal(0f, thirdToOther.Strength);
+            AssertRelationStrength(0, OtherName, MyName);
+            AssertRelationStrength(0, ThirdName, MyName);
+            AssertRelationStrength(0, OtherName, ThirdName);
+            AssertRelationStrength(0, ThirdName, OtherName);
         }
-
 
         [Theory]
         [InlineData(0.3)]
         [InlineData(0.7)]
-        public void AccountCanSetAndGetRelationWeightForPeers(float setWeight)
+        public void AccountCanSetAndGetRelationWeightForPeers(float weight)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)setWeight);
-
-            Assert.Equal(setWeight, MyAccount.GetRelationWeight(OtherName, ThirdName));
+            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)weight);
+            Assert.Equal(weight, MyAccount.GetRelationWeight(OtherName, ThirdName));
         }
 
         [Fact]
@@ -109,7 +92,12 @@ namespace Trustcoin.Core.Test
 
             OtherActor.CreateAccount(childName);
 
-            Assert.True(OtherAccount.IsConnectedTo(childName));
+            Assert.True(MyAccount.IsConnectedTo(childName));
+        }
+
+        private void AssertRelationStrength(float expected, string from, string to)
+        {
+            Assert.Equal(expected, MyAccount.GetPeer(from).GetRelation(to).Strength);
         }
     }
 }
