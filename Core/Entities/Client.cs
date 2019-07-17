@@ -194,8 +194,11 @@ namespace Trustcoin.Core.Entities
 
         private void RejectTransaction(AcceptTransationAction action)
         {
-            _actor.Account.DecreaseTrust(action.Model.Transfers[0].ReceiverName, UnaccountedTransactionDistrustFactor);
-            _actor.Account.DecreaseTrust(action.Model.Transfers[0].GiverName, UnaccountedTransactionDistrustFactor);
+            var involvedParties = action.Model.Transfers
+                .SelectMany(x => new[] { x.GiverName, x.ReceiverName })
+                .Distinct()
+                .ToList();
+            involvedParties.ForEach(ip => _actor.Account.DecreaseTrust(ip, UnaccountedTransactionDistrustFactor));
         }
 
         private void AddMoneyFromEndorcement(IPeer endorcer, Relation relation, float factor = 1)
