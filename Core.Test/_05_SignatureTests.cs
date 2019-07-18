@@ -22,7 +22,7 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AgentHasSameKeyAsAccount()
         {
-            Assert.Equal(MyAccount.PublicKey, _network.FindAgent(MyName).PublicKey);
+            Assert.Equal(MyAccount.PublicKey, _network.FindAgent(MyId).PublicKey);
         }
 
         [Fact]
@@ -64,6 +64,13 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
+        public void CanSendSignedActionToPeer()
+        {
+            Interconnect(MyActor, OtherActor);
+            Assert.True(_network.SendAction(OtherId, MyId, MyAccount.Sign(new NoAction())));
+        }
+
+        [Fact]
         public void CanRenewAccountKeys()
         {
             var keyBefore = MyAccount.PublicKey;
@@ -77,29 +84,22 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor);
             MyActor.RenewKeys();
-            Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyName).PublicKey);
+            Assert.Equal(MyAccount.PublicKey, OtherAccount.GetPeer(MyId).PublicKey);
         }
 
         [Fact]
         public void WhenUpdatedWithInvalidSignature_ThrowsInvalidOperationException()
         {
-            MyActor.Connect(OtherName);
-            var otherAgent = _network.FindAgent(OtherName);
+            MyActor.Connect(OtherId);
+            var otherAgent = _network.FindAgent(OtherId);
             Assert.Throws<InvalidOperationException>(
-                () => _network.SendAction(MyName, OtherName, _cryptography.Sign(new NoAction())));
-        }
-
-        [Fact]
-        public void CanSendActionToPeer()
-        {
-            Interconnect(MyActor, OtherActor);
-            Assert.True(_network.SendAction(OtherName, MyName, MyAccount.Sign(new NoAction())));
+                () => _network.SendAction(MyId, OtherId, _cryptography.Sign(new NoAction())));
         }
 
         [Fact]
         public void WhenUpdatedWithUnconnectedAgent_ReturnsFalse()
         {
-            Assert.False(_network.SendAction(MyName, OtherName, _cryptography.Sign(new NoAction())));
+            Assert.False(_network.SendAction(MyId, OtherId, _cryptography.Sign(new NoAction())));
         }
     }
 }

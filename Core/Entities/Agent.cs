@@ -6,7 +6,7 @@ namespace Trustcoin.Core.Entities
 {
     public class Agent : NewAgent, IAgent
     {
-        private readonly IDictionary<string, Relation> _relations = new Dictionary<string, Relation>();
+        private readonly IDictionary<AgentId, Relation> _relations = new Dictionary<AgentId, Relation>();
 
         public Agent(IAccount account)
             : this(account.Name, account.Id, account.PublicKey, account.Peers.Select(p => p.AsRelation()))
@@ -21,7 +21,7 @@ namespace Trustcoin.Core.Entities
         protected Agent(string name, AgentId id, byte[] publicKey, IEnumerable<Relation> relations)
             : base(name, id, publicKey)
         {
-            _relations = relations.ToDictionary(r => r.Agent.Name);
+            _relations = relations.ToDictionary(r => r.Agent.Id);
         }
 
         public IPeer AsPeer()
@@ -31,12 +31,12 @@ namespace Trustcoin.Core.Entities
             => new Agent(Name, Id, PublicKey, Relations);
 
         public ICollection<Relation> Relations => _relations.Values;
-        public bool IsConnectedTo(string name) => _relations.ContainsKey(name);
+        public bool IsConnectedTo(AgentId id) => _relations.ContainsKey(id);
 
         public Relation AddRelation(IAgent agent)
-            => _relations[agent.Name] = new Relation(agent);
+            => _relations[agent.Id] = new Relation(agent);
 
-        public Relation GetRelation(string name)
-            => _relations.TryGetValue(name, out var peer) ? peer : default;
+        public Relation GetRelation(AgentId id)
+            => _relations.TryGetValue(id, out var peer) ? peer : default;
     }
 }

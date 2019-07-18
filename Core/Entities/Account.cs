@@ -10,10 +10,11 @@ namespace Trustcoin.Core.Entities
 {
     public class Account : IAccount
     {
-        private readonly List<IAgent> _children = new List<IAgent>();
-        private readonly IDictionary<string, IPeer> _peers = new Dictionary<string, IPeer>();
+        private byte _createdAccountCount = 0;
+        private uint _createdArtefactCount = 0;
+        private readonly IDictionary<AgentId, IPeer> _peers = new Dictionary<AgentId, IPeer>();
         private readonly IDictionary<string, Transaction> _pendingTransactions = new Dictionary<string, Transaction>();
-        private readonly IDictionary<string, Artefact> _knownArtefacts = new Dictionary<string, Artefact>();
+        private readonly IDictionary<ArtefactId, Artefact> _knownArtefacts = new Dictionary<ArtefactId, Artefact>();
         private readonly ICryptography _cryptography;
         private readonly LimitedQueue<string> _receivedTransactions = new LimitedQueue<string>(100);
 
@@ -28,7 +29,7 @@ namespace Trustcoin.Core.Entities
             Name = name;
             Id = id;
             Self = CreateSelf();
-            SetRelationWeight(Name, Name, Weight.Max);
+            SetRelationWeight(Id, Id, Weight.Max);
         }
 
         public string Name { get; }
@@ -38,68 +39,69 @@ namespace Trustcoin.Core.Entities
 
         public IPeer Self { get; }
 
-        public bool IsConnectedTo(string name)
-            => name == Name || (name != null && _peers.ContainsKey(name));
+        public bool IsConnectedTo(AgentId id)
+            => id == Id || _peers.ContainsKey(id);
 
         public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
 
         public IAccount CreateChild(string name)
         {
-            var number = (byte)(_children.Count + 1);
-            var child = new Account(_cryptography, name, Id + number);
-            _children.Add(child.Self);
+            var child = new Account(_cryptography, name, Id + ++_createdAccountCount);
             return child;
         }
 
-        public bool KnowsArtefact(string name)
-            => _knownArtefacts.ContainsKey(name);
+        public bool KnowsArtefact(ArtefactId id)
+            => _knownArtefacts.ContainsKey(id);
 
-        public Artefact ProduceArtefact(string name)
-            => _knownArtefacts.TryGetValue(name, out var artefact) 
-            ? artefact 
-            : new Artefact(name, null);
+        public Artefact ProduceArtefact(Artefact artefact)
+            => _knownArtefacts.TryGetValue(artefact.Id, out var knownArtefact) 
+            ? knownArtefact
+            : new Artefact(artefact, default);
 
-        public Artefact GetArtefact(string name)
-            => _knownArtefacts[name];
+        public Artefact CreateArtefact(string name)
+            => new Artefact(Id / ++_createdArtefactCount, name, Id);
 
-        public void ForgetArtefact(string name)
+        public Artefact GetArtefact(ArtefactId id)
+            => _knownArtefacts[id];
+
+        public void ForgetArtefact(ArtefactId id)
         {
-            _knownArtefacts.Remove(name);
+            _knownArtefacts.Remove(id);
         }
 
-        public IPeer GetPeer(string name)
-            => name == Name ? Self
-            : _peers.TryGetValue(name, out var peer) ? peer
-            : throw new NotFound<IPeer>(name);
+        public IPeer GetPeer(AgentId id)
+            => id == Id ? Self
+            : _peers.TryGetValue(id, out var peer) ? peer
+            : throw new NotFound<IPeer>("id", $"{id}");
 
-        public SignedWeight GetTrust(string name) => GetPeer(name).Trust;
-        public SignedWeight SetTrust(string name, SignedWeight trust) 
-            => GetPeer(name).Trust = name == Name ? SignedWeight.Max : trust;
-        public SignedWeight IncreaseTrust(string name, Weight factor) 
-            => name == Name ? SignedWeight.Max : GetPeer(name).IncreaseTrust(factor);
-        public SignedWeight DecreaseTrust(string name, Weight factor) 
-            => name == Name ? SignedWeight.Max : GetPeer(name).DecreaseTrust(factor);
+        public SignedWeight GetTrust(AgentId id) => GetPeer(id).Trust;
+        public SignedWeight SetTrust(AgentId id, SignedWeight trust) 
+            => GetPeer(id).Trust = id == Id ? SignedWeight.Max : trust;
+        public SignedWeight IncreaseTrust(AgentId id, Weight factor) 
+            => id == Id ? SignedWeight.Max : GetPeer(id).IncreaseTrust(factor);
+        public SignedWeight DecreaseTrust(AgentId id, Weight factor) 
+            => id == Id ? SignedWeight.Max : GetPeer(id).DecreaseTrust(factor);
 
-        public Money GetMoney(string name) => GetPeer(name).Money;
-        public void SetMoney(string name, Money money) => GetPeer(name).Money = money;
-        public void IncreaseMoney(string name, Money money) 
-            => GetPeer(name).IncreaseMoney(money);
-        public void DecreaseMoney(string name, Money money) 
-            => GetPeer(name).DecreaseMoney(money);
+        public Money GetMoney(AgentId id) => GetPeer(id).Money;
+        public void SetMoney(AgentId id, Money money) => GetPeer(id).Money = money;
+        public void IncreaseMoney(AgentId id, Money money) 
+            => GetPeer(id).IncreaseMoney(money);
+        public void DecreaseMoney(AgentId id, Money money) 
+            => GetPeer(id).DecreaseMoney(money);
 
-        public void SetRelationWeight(string subjectName, string objectName, Weight value)
+        public void SetRelationWeight(AgentId subjectId, AgentId objectId, Weight value)
         {
-            if (subjectName == objectName)
+            if (subjectId == objectId)
                 value = Weight.Max;
-            var subject = GetPeer(subjectName);
-            var relation = subject.GetRelation(objectName);
+            var subject = GetPeer(subjectId);
+            var relation = subject.GetRelation(objectId);
             relation.Strength = value;
         }
 
-        public Weight GetRelationWeight(string subjectName, string objectName)
+        public Weight GetRelationWeight(AgentId subjectId, AgentId objectId)
         {
-            var subject = GetPeer(subjectName);
-            var relation = subject.GetRelation(objectName);
+            var subject = GetPeer(subjectId);
+            var relation = subject.GetRelation(objectId);
             return relation.Strength;
         }
 
@@ -112,7 +114,7 @@ namespace Trustcoin.Core.Entities
 
         public void RememberArtefact(Artefact artefact)
         {
-            _knownArtefacts.Add(artefact.Name, artefact);
+            _knownArtefacts.Add(artefact.Id, artefact);
         }
 
         public void VerifySignature(SignedAction signedAction, IPeer peer)
@@ -132,7 +134,7 @@ namespace Trustcoin.Core.Entities
 
         public void AddPeer(IPeer peer)
         {
-            _peers.Add(peer.Name, peer);
+            _peers.Add(peer.Id, peer);
         }
 
         public SignedAction Sign(IAction action)
@@ -144,25 +146,25 @@ namespace Trustcoin.Core.Entities
         public IActor GetActor(INetwork network, ITransactionFactory transactionFactory)
             => new Actor(network, this, transactionFactory);
 
-        public void MoveArtefact(Artefact artefact, string ownerName)
+        public void MoveArtefact(Artefact artefact, AgentId ownerId)
         {
             RemoveArtefact(artefact);
-            AddArtefact(artefact.Name, ownerName);
+            AddArtefact(artefact, ownerId);
         }
 
         public void RemoveArtefact(Artefact artefact)
         {
-            ForgetArtefact(artefact.Name);
-            if (IsConnectedTo(artefact.OwnerName))
-                GetPeer(artefact.OwnerName).RemoveArtefact(artefact);
+            ForgetArtefact(artefact.Id);
+            if (IsConnectedTo(artefact.OwnerId))
+                GetPeer(artefact.OwnerId).RemoveArtefact(artefact);
         }
 
-        public void AddArtefact(string artefactName, string ownerName)
+        public void AddArtefact(Artefact artefact, AgentId ownerId)
         {
-            if (!IsConnectedTo(ownerName))
+            if (!IsConnectedTo(ownerId))
                 return;
-            var newArtefact = new Artefact(artefactName, ownerName);
-            GetPeer(ownerName).AddArtefact(newArtefact);
+            var newArtefact = new Artefact(artefact, ownerId);
+            GetPeer(ownerId).AddArtefact(newArtefact);
             RememberArtefact(newArtefact);
         }
 

@@ -2,12 +2,13 @@
 using Trustcoin.Core.Actions;
 using Trustcoin.Core.Cryptography;
 using Trustcoin.Core.Entities;
+using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Infrastructure
 {
     public class Network : INetwork
     {
-        private readonly IDictionary<string, IAccount> _accounts = new Dictionary<string, IAccount>();
+        private readonly IDictionary<AgentId, IAccount> _accounts = new Dictionary<AgentId, IAccount>();
         private readonly ICryptographyFactory _cryptographyFactory;
         private readonly ITransactionFactory _transactionFactory = new TransactionFactory();
         private readonly ILookupService _lookupService = new LookupService();
@@ -24,29 +25,29 @@ namespace Trustcoin.Core.Infrastructure
 
         public void AddAccount(IAccount account)
         {
-            _accounts[account.Name] = account;
+            _accounts[account.Id] = account;
             _lookupService.Add(account.Self);
         }
 
-        public IAgent FindAgent(string name)
-            => _lookupService.Find(name);
+        public IAgent FindAgent(AgentId id)
+            => _lookupService.Find(id);
 
-        public Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames)
+        public Update RequestUpdate(AgentId targetId, AgentId[] subjectIds, ArtefactId[] artefactIds)
         {
-            var targetClient = _accounts[targetName].GetClient(this, _transactionFactory);
-            return targetClient.RequestUpdate(subjectNames, artefactNames);
+            var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
+            return targetClient.RequestUpdate(subjectIds, artefactIds);
         }
 
-        public bool? RequestVerification(string targetName, Transaction transaction)
+        public bool? RequestVerification(AgentId targetId, Transaction transaction)
         {
-            var targetClient = _accounts[targetName].GetClient(this, _transactionFactory);
+            var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
             return targetClient.Verify(transaction);
         }
 
-        public bool SendAction(string targetName, string subjectName, SignedAction action)
+        public bool SendAction(AgentId targetId, AgentId subjectId, SignedAction action)
         {
-            var targetClient = _accounts[targetName].GetClient(this, _transactionFactory);
-            return targetClient.Update(subjectName, action.Clone());
+            var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
+            return targetClient.Update(subjectId, action.Clone());
         }
 
         public ILookupService GetLookupService() => _lookupService;

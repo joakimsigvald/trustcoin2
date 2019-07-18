@@ -5,14 +5,14 @@ using Trustcoin.Core.Types;
 namespace Trustcoin.Core.Actions
 {
     [Serializable]
-    public class EndorceAction : AgentIdAction
+    public abstract class AgentIdAction : ActionBase<AgentId, AgentId>
     {
-        protected EndorceAction(SerializationInfo info, StreamingContext context)
+        protected AgentIdAction(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
 
-        public EndorceAction(AgentId agentId) : base(agentId)
+        public AgentIdAction(AgentId agentId) : base(agentId)
         {
         }
     }

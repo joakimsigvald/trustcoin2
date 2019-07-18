@@ -1,12 +1,13 @@
 ﻿using Trustcoin.Core.Actions;
 using Trustcoin.Core.Infrastructure;
+using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Entities
 {
     public interface IClient
     {
-        bool Update(string subjectName, SignedAction action);
-        Update RequestUpdate(string[] subjectNames, string[] artefactNames);
+        bool Update(AgentId subjectId, SignedAction action);
+        Update RequestUpdate(AgentId[] subjectIds, ArtefactId[] artefactIds);
         bool? Verify(Transaction transaction);
     }
 }

@@ -15,11 +15,12 @@ namespace Trustcoin.Core.Test
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
 
-            MakeTransaction(OtherActor, MyActor, OtherActor.CreateArtefact(ArtefactName));
+            var artefact = OtherActor.CreateArtefact(Artefact.Name);
+            MakeTransaction(OtherActor, MyActor, artefact);
 
-            Assert.Equal(MyName, MyAccount.GetArtefact(ArtefactName).OwnerName);
-            Assert.Equal(MyName, OtherAccount.GetArtefact(ArtefactName).OwnerName);
-            Assert.Equal(MyName, ThirdAccount.GetArtefact(ArtefactName).OwnerName);
+            Assert.Equal(MyId, MyAccount.GetArtefact(artefact.Id).OwnerId);
+            Assert.Equal(MyId, OtherAccount.GetArtefact(artefact.Id).OwnerId);
+            Assert.Equal(MyId, ThirdAccount.GetArtefact(artefact.Id).OwnerId);
         }
 
         [Fact]
@@ -28,9 +29,10 @@ namespace Trustcoin.Core.Test
             Interconnect(MyActor, OtherActor);
             Interconnect(OtherActor, ThirdActor);
 
-            MakeTransaction(OtherActor, MyActor, OtherActor.CreateArtefact(ArtefactName));
+            var artefact = OtherActor.CreateArtefact(Artefact.Name);
+            MakeTransaction(OtherActor, MyActor, artefact);
 
-            Assert.Equal(MyName, ThirdAccount.GetArtefact(ArtefactName).OwnerName);
+            Assert.Equal(MyId, ThirdAccount.GetArtefact(artefact.Id).OwnerId);
         }
 
         [Fact]
@@ -42,65 +44,66 @@ namespace Trustcoin.Core.Test
             var otherActor = OtherAccount.GetActor(_network, sameKeyFactoryMock.Object);
             Interconnect(myActor, otherActor);
 
-            MakeTransaction(otherActor, myActor, otherActor.CreateArtefact(ArtefactName));
-            MakeTransaction(myActor, otherActor, MyAccount.GetArtefact(ArtefactName));
+            var artefact = otherActor.CreateArtefact(Artefact.Name);
+            MakeTransaction(otherActor, myActor, artefact);
+            MakeTransaction(myActor, otherActor, MyAccount.GetArtefact(artefact.Id));
 
-            Assert.True(MyAccount.Self.HasArtefact(ArtefactName));
-            Assert.False(OtherAccount.Self.HasArtefact(ArtefactName));
+            Assert.True(MyAccount.Self.HasArtefact(artefact.Id));
+            Assert.False(OtherAccount.Self.HasArtefact(artefact.Id));
         }
 
         [Fact]
         public void IfThreeOfFourPeersAgreeGiverHasArtefact_TransactionCanBeAccepted_ButIsNotAcceptedByDisagreeingPeer()
         {
             Interconnect(MyActor, OtherActor);
-            var artefact = OtherActor.CreateArtefact(ArtefactName);
-            ThirdActor.CreateArtefact(ArtefactName);
+            var a1 = OtherActor.CreateArtefact(Artefact.Name);
+            var a2 = ThirdActor.CreateArtefact(Artefact.Name);
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)0.5f);
-            MyAccount.SetTrust(ThirdName, (SignedWeight)0.5f);
+            MyAccount.SetTrust(OtherId, (SignedWeight)0.5f);
+            MyAccount.SetTrust(ThirdId, (SignedWeight)0.5f);
 
-            Assert.True(MakeTransaction(OtherActor, MyActor, artefact));
-            Assert.Equal(ThirdName, ThirdAccount.GetArtefact(ArtefactName).OwnerName);
+            Assert.True(MakeTransaction(OtherActor, MyActor, a1));
+            Assert.Equal(ThirdId, ThirdAccount.GetArtefact(a2.Id).OwnerId);
         }
 
         [Fact]
         public void IfTwoOfThreePeersAgreeGiverHasArtefact_ItCannotBeAcceptedAndIsNotAccounted()
         {
             Interconnect(MyActor, OtherActor);
-            var artefact = OtherActor.CreateArtefact(ArtefactName);
-            ThirdActor.CreateArtefact(ArtefactName);
+            var artefact = OtherActor.CreateArtefact(Artefact.Name);
+            ThirdActor.CounterfeitArtefact(artefact);
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)1);
-            MyAccount.SetTrust(ThirdName, (SignedWeight)1);
+            MyAccount.SetTrust(OtherId, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdId, (SignedWeight)1);
 
             Assert.False(MakeTransaction(OtherActor, MyActor, artefact));
-            Assert.False(MyAccount.Self.HasArtefact(ArtefactName));
+            Assert.False(MyAccount.Self.HasArtefact(artefact.Id));
         }
 
         [Fact]
         public void EvenIfSomePeersDontKnowArtefact_TransactionIsVerified()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)1);
-            MyAccount.SetTrust(ThirdName, (SignedWeight)1);
+            MyAccount.SetTrust(OtherId, (SignedWeight)1);
+            MyAccount.SetTrust(ThirdId, (SignedWeight)1);
         }
 
         [Fact]
         public void WhenTransactionIsNotAccounted_InvolvedPeersLoseTrust()
         {
             Interconnect(OtherActor, ThirdActor);
-            var artefact = OtherActor.CreateArtefact(ArtefactName);
-            MyActor.CreateArtefact(ArtefactName);
+            var artefact = OtherActor.CreateArtefact(Artefact.Name);
+            MyActor.CounterfeitArtefact(artefact);
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var otherTrustBefore = MyAccount.GetTrust(OtherName);
-            var thirdTrustBefore = MyAccount.GetTrust(ThirdName);
+            var otherTrustBefore = MyAccount.GetTrust(OtherId);
+            var thirdTrustBefore = MyAccount.GetTrust(ThirdId);
 
             MakeTransaction(OtherActor, ThirdActor, artefact);
 
             var expectedOtherTrust = otherTrustBefore.Decrease(UnaccountedTransactionDistrustFactor);
             var expectedThirdTrust = thirdTrustBefore.Decrease(UnaccountedTransactionDistrustFactor);
-            var actualOtherTrust = MyAccount.GetTrust(OtherName);
-            var actualThirdTrust = MyAccount.GetTrust(ThirdName);
+            var actualOtherTrust = MyAccount.GetTrust(OtherId);
+            var actualThirdTrust = MyAccount.GetTrust(ThirdId);
             Assert.Equal(expectedOtherTrust, actualOtherTrust);
             Assert.Equal(expectedThirdTrust, actualThirdTrust);
         }
@@ -109,16 +112,16 @@ namespace Trustcoin.Core.Test
         public void WhenTransactionIsAccounted_InvolvedPeersGainTrust()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            var artefact = OtherActor.CreateArtefact(ArtefactName);
-            var otherTrustBefore = MyAccount.GetTrust(OtherName);
-            var thirdTrustBefore = MyAccount.GetTrust(ThirdName);
+            var artefact = OtherActor.CreateArtefact(Artefact.Name);
+            var otherTrustBefore = MyAccount.GetTrust(OtherId);
+            var thirdTrustBefore = MyAccount.GetTrust(ThirdId);
 
             MakeTransaction(OtherActor, ThirdActor, artefact);
 
             var expectedOtherTrust = otherTrustBefore.Increase(AccountedTransactionTrustFactor);
             var expectedThirdTrust = thirdTrustBefore.Increase(AccountedTransactionTrustFactor);
-            var actualOtherTrust = MyAccount.GetTrust(OtherName);
-            var actualThirdTrust = MyAccount.GetTrust(ThirdName);
+            var actualOtherTrust = MyAccount.GetTrust(OtherId);
+            var actualThirdTrust = MyAccount.GetTrust(ThirdId);
             Assert.Equal(expectedOtherTrust, actualOtherTrust);
             Assert.Equal(expectedThirdTrust, actualThirdTrust);
         }
@@ -132,29 +135,29 @@ namespace Trustcoin.Core.Test
         {
             var someMoney = (Money)100;
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)acceptingPeerTrust);
-            MyAccount.SetTrust(ThirdName, (SignedWeight)rejectingPeerTrust);
-            MyAccount.SetMoney(OtherName, someMoney);
-            OtherAccount.SetTrust(MyName, (SignedWeight)acceptingPeerTrust);
-            OtherAccount.SetTrust(ThirdName, (SignedWeight)rejectingPeerTrust);
-            OtherAccount.SetMoney(OtherName, someMoney);
+            MyAccount.SetTrust(OtherId, (SignedWeight)acceptingPeerTrust);
+            MyAccount.SetTrust(ThirdId, (SignedWeight)rejectingPeerTrust);
+            MyAccount.SetMoney(OtherId, someMoney);
+            OtherAccount.SetTrust(MyId, (SignedWeight)acceptingPeerTrust);
+            OtherAccount.SetTrust(ThirdId, (SignedWeight)rejectingPeerTrust);
+            OtherAccount.SetMoney(OtherId, someMoney);
 
-            Assert.Equal(0f, MyAccount.GetMoney(MyName));
-            Assert.Equal(0f, OtherAccount.GetMoney(MyName));
-            Assert.Equal(0f, ThirdAccount.GetMoney(MyName));
-            Assert.Equal(someMoney, MyAccount.GetMoney(OtherName));
-            Assert.Equal(someMoney, OtherAccount.GetMoney(OtherName));
-            Assert.Equal(0f, ThirdAccount.GetMoney(MyName));
+            Assert.Equal(0f, MyAccount.GetMoney(MyId));
+            Assert.Equal(0f, OtherAccount.GetMoney(MyId));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyId));
+            Assert.Equal(someMoney, MyAccount.GetMoney(OtherId));
+            Assert.Equal(someMoney, OtherAccount.GetMoney(OtherId));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyId));
 
             Assert.Equal(transactionAccepted, MakeTransaction(MyActor, OtherActor, someMoney));
 
             if (!transactionAccepted) return;
-            Assert.Equal(someMoney, MyAccount.GetMoney(MyName));
-            Assert.Equal(someMoney, OtherAccount.GetMoney(MyName));
-            Assert.Equal(0f, ThirdAccount.GetMoney(MyName));
-            Assert.Equal(0f, MyAccount.GetMoney(OtherName));
-            Assert.Equal(0f, OtherAccount.GetMoney(OtherName));
-            Assert.Equal(0f, ThirdAccount.GetMoney(MyName));
+            Assert.Equal(someMoney, MyAccount.GetMoney(MyId));
+            Assert.Equal(someMoney, OtherAccount.GetMoney(MyId));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyId));
+            Assert.Equal(0f, MyAccount.GetMoney(OtherId));
+            Assert.Equal(0f, OtherAccount.GetMoney(OtherId));
+            Assert.Equal(0f, ThirdAccount.GetMoney(MyId));
         }
 
         [Fact]
@@ -164,15 +167,15 @@ namespace Trustcoin.Core.Test
             Interconnect(MyActor, OtherActor, ThirdActor);
             SetMutualTrust((SignedWeight)1, MyActor, OtherActor, ThirdActor);
             InitializeMoney(money, MyActor, OtherActor, ThirdActor);
-            var artefact1 = OtherActor.CreateArtefact(ArtefactName);
-            var artefact2 = OtherActor.CreateArtefact(AnotherArtefactName);
+            var a1 = OtherActor.CreateArtefact(Artefact.Name);
+            var a2 = OtherActor.CreateArtefact(AnotherArtefact.Name);
 
-            Assert.True(MakeTransaction(OtherActor, MyActor, money, artefact1, artefact2));
+            Assert.True(MakeTransaction(OtherActor, MyActor, money, a1, a2));
 
-            Assert.Equal(Money.Min, ThirdAccount.GetMoney(MyName));
-            Assert.Equal(2 * money, ThirdAccount.GetMoney(OtherName));
-            Assert.Equal(MyName, ThirdAccount.GetArtefact(artefact1.Name).OwnerName);
-            Assert.Equal(MyName, ThirdAccount.GetArtefact(artefact2.Name).OwnerName);
+            Assert.Equal(Money.Min, ThirdAccount.GetMoney(MyId));
+            Assert.Equal(2 * money, ThirdAccount.GetMoney(OtherId));
+            Assert.Equal(MyId, ThirdAccount.GetArtefact(a1.Id).OwnerId);
+            Assert.Equal(MyId, ThirdAccount.GetArtefact(a2.Id).OwnerId);
         }
 
         private bool MakeTransaction(IActor giver, IActor receiver, params Artefact[] artefacts)
@@ -181,7 +184,7 @@ namespace Trustcoin.Core.Test
         private bool MakeTransaction(IActor seller, IActor buyer, Money money, params Artefact[] artefacts)
         {
             var transfers = GetTransfers(seller, buyer, money, artefacts).ToArray();
-            var key = seller.StartTransaction(buyer.Account.Name, transfers);
+            var key = seller.StartTransaction(buyer.Account.Id, transfers);
             return !string.IsNullOrEmpty(key) && buyer.AcceptTransaction(key);
         }
 
@@ -190,14 +193,14 @@ namespace Trustcoin.Core.Test
             if (money > 0f) yield return new Transfer
             {
                 Money = money,
-                GiverName = buyer.Account.Name,
-                ReceiverName = seller.Account.Name
+                GiverId = buyer.Account.Id,
+                ReceiverId = seller.Account.Id
             };
             if (artefacts.Any()) yield return new Transfer
             {
                 Artefacts = artefacts,
-                GiverName = seller.Account.Name,
-                ReceiverName = buyer.Account.Name
+                GiverId = seller.Account.Id,
+                ReceiverId = buyer.Account.Id
             };
         }
     }

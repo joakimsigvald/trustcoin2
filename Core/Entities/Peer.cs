@@ -8,7 +8,7 @@ namespace Trustcoin.Core.Entities
 {
     public class Peer : Agent, IPeer
     {
-        private readonly IDictionary<string, Artefact> _artefacts = new Dictionary<string, Artefact>();
+        private readonly IDictionary<ArtefactId, Artefact> _artefacts = new Dictionary<ArtefactId, Artefact>();
 
         internal Peer(string name, AgentId id, byte[] publicKey, IEnumerable<Relation> relations)
             : base(name, id, publicKey, relations)
@@ -26,25 +26,25 @@ namespace Trustcoin.Core.Entities
 
         public void AddArtefact(Artefact artefact)
         {
-            if (HasArtefact(artefact.Name))
-                throw new DuplicateKey<string>(artefact.Name);
-            if (artefact.OwnerName != Name)
+            if (HasArtefact(artefact.Id))
+                throw new DuplicateKey<ArtefactId>(artefact.Id);
+            if (artefact.OwnerId != Id)
                 throw new ArgumentException("Cannot add artefact with othe owner");
-            _artefacts.Add(artefact.Name, artefact);
+            _artefacts.Add(artefact.Id, artefact);
         }
 
         public void RemoveArtefact(Artefact artefact)
         {
-            _artefacts.Remove(artefact.Name);
+            _artefacts.Remove(artefact.Id);
         }
 
-        public bool HasArtefact(string name)
-            => _artefacts.ContainsKey(name);
+        public bool HasArtefact(ArtefactId id)
+            => _artefacts.ContainsKey(id);
 
-        public Artefact GetArtefact(string name)
-            => _artefacts.TryGetValue(name, out var artefact)
+        public Artefact GetArtefact(ArtefactId id)
+            => _artefacts.TryGetValue(id, out var artefact)
             ? artefact
-            : throw new NotFound<Artefact>(name);
+            : throw new NotFound<Artefact>(nameof(id), id.ToString());
 
         public void IncreaseMoney(Money money)
         {

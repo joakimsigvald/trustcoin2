@@ -1,5 +1,6 @@
 ﻿using Trustcoin.Core.Actions;
 using Trustcoin.Core.Entities;
+using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Infrastructure
 {
@@ -7,10 +8,10 @@ namespace Trustcoin.Core.Infrastructure
     {
         IAccount CreateRootAccount(string name, byte number);
         void AddAccount(IAccount account);
-        IAgent FindAgent(string name);
+        IAgent FindAgent(AgentId id);
         ILookupService GetLookupService();
-        bool SendAction(string targetName, string sourceName, SignedAction action);
-        Update RequestUpdate(string targetName, string[] subjectNames, string[] artefactNames);
-        bool? RequestVerification(string targetName, Transaction transaction);
+        bool SendAction(AgentId targetId, AgentId sourceId, SignedAction action);
+        Update RequestUpdate(AgentId targetName, AgentId[] subjectIds, ArtefactId[] artefactIds);
+        bool? RequestVerification(AgentId targetName, Transaction transaction);
     }
 }

@@ -55,23 +55,6 @@ namespace Trustcoin.Core.Test
             Assert.Same(cc.Self, _lookupService.Find((AgentId)"1.3.3"));
         }
 
-        [Fact]
-        public void CanFindAgentByName()
-        {
-            Assert.Same(a.Self, _lookupService.Find("A"));
-            Assert.Same(b.Self, _lookupService.Find("B"));
-            Assert.Same(c.Self, _lookupService.Find("C"));
-            Assert.Same(aa.Self, _lookupService.Find("AA"));
-            Assert.Same(ab.Self, _lookupService.Find("AB"));
-            Assert.Same(ac.Self, _lookupService.Find("AC"));
-            Assert.Same(ba.Self, _lookupService.Find("BA"));
-            Assert.Same(bb.Self, _lookupService.Find("BB"));
-            Assert.Same(bc.Self, _lookupService.Find("BC"));
-            Assert.Same(ca.Self, _lookupService.Find("CA"));
-            Assert.Same(cb.Self, _lookupService.Find("CB"));
-            Assert.Same(cc.Self, _lookupService.Find("CC"));
-        }
-
         private IAccount CreateAccount(IAccount parent, string name) 
             => GetActor(parent).CreateAccount(name);
 

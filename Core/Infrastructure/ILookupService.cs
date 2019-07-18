@@ -7,6 +7,5 @@ namespace Trustcoin.Core.Infrastructure
     {
         void Add(IAgent agent);
         IAgent Find(AgentId id);
-        IAgent Find(string name);
     }
 }

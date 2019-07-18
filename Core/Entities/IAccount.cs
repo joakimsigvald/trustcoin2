@@ -14,31 +14,31 @@ namespace Trustcoin.Core.Entities
         byte[] PublicKey { get; }
         AgentId Id { get; }
 
-        bool IsConnectedTo(string name);
-        IPeer GetPeer(string name);
-        SignedWeight GetTrust(string name);
-        SignedWeight SetTrust(string name, SignedWeight value);
-        SignedWeight IncreaseTrust(string name, Weight factor);
-        SignedWeight DecreaseTrust(string name, Weight factor);
+        bool IsConnectedTo(AgentId agentId);
+        IPeer GetPeer(AgentId id);
+        SignedWeight GetTrust(AgentId agentId);
+        SignedWeight SetTrust(AgentId agentId, SignedWeight value);
+        SignedWeight IncreaseTrust(AgentId agentId, Weight factor);
+        SignedWeight DecreaseTrust(AgentId agentId, Weight factor);
         void RenewKeys();
-        Weight GetRelationWeight(string subjectName, string objectName);
-        void SetRelationWeight(string subjectName, string objectName, Weight value);
+        Weight GetRelationWeight(AgentId subjectId, AgentId objectId);
+        void SetRelationWeight(AgentId subjectId, AgentId objectId, Weight value);
         void AddPeer(IPeer newPeer);
-        Money GetMoney(string name);
-        void SetMoney(string name, Money money);
-        Artefact GetArtefact(string name);
-        void ForgetArtefact(string name);
+        Money GetMoney(AgentId id);
+        void SetMoney(AgentId id, Money money);
+        Artefact GetArtefact(ArtefactId id);
+        void ForgetArtefact(ArtefactId id);
         void VerifySignature(SignedAction signedAction, IPeer peer);
-        bool KnowsArtefact(string name);
+        bool KnowsArtefact(ArtefactId id);
         void RememberArtefact(Artefact artefact);
         IAccount CreateChild(string name);
         void RemoveArtefact(Artefact artefact);
-        void AddArtefact(string artefactName, string ownerName);
-        void MoveArtefact(Artefact artefact, string ownerName);
+        void AddArtefact(Artefact artefact, AgentId ownerId);
+        void MoveArtefact(Artefact artefact, AgentId ownerId);
         SignedAction Sign(IAction action);
         IClient GetClient(INetwork network, ITransactionFactory transactionFactory);
         IActor GetActor(INetwork network, ITransactionFactory transactionFactory);
-        Artefact ProduceArtefact(string name);
+        Artefact ProduceArtefact(Artefact artefact);
 
         Transaction GetPendingTransaction(string key);
         void AddTransaction(Transaction action);
@@ -47,7 +47,8 @@ namespace Trustcoin.Core.Entities
         bool HasReceivedTransaction(string key);
         void AddPendingTransaction(Transaction transaction);
         void AddReceivedTransaction(string key);
-        void IncreaseMoney(string name, Money money);
-        void DecreaseMoney(string name, Money money);
+        void IncreaseMoney(AgentId id, Money money);
+        void DecreaseMoney(AgentId id, Money money);
+        Artefact CreateArtefact(string name);
     }
 }

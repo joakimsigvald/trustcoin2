@@ -21,17 +21,17 @@ namespace Trustcoin.Core.Entities
             _transactionFactory = transactionFactory;
         }
 
-        public IPeer ProducePeer(string name)
-            => Account.IsConnectedTo(name) ? Account.GetPeer(name) : Connect(name);
+        public IPeer ProducePeer(AgentId id)
+            => Account.IsConnectedTo(id) ? Account.GetPeer(id) : Connect(id);
 
-        public IPeer Connect(string name)
+        public IPeer Connect(AgentId id)
         {
-            if (Account.IsConnectedTo(name))
-                return Account.GetPeer(name);
-            var newPeer = _network.FindAgent(name).AsPeer();
+            if (Account.IsConnectedTo(id))
+                return Account.GetPeer(id);
+            var newPeer = _network.FindAgent(id).AsPeer();
             Account.AddPeer(newPeer);
             SyncPeer(newPeer);
-            OnAddedConnection(name);
+            OnAddedConnection(id);
             return newPeer;
         }
 
@@ -41,30 +41,30 @@ namespace Trustcoin.Core.Entities
             _network.AddAccount(child);
             OnChildCreated(new NewAgent(child));
             var actor = new Actor(_network, child, _transactionFactory);
-            actor.Connect(Account.Name);
+            actor.Connect(Account.Id);
             return child;
         }
 
-        public void Endorce(string name)
+        public void Endorce(AgentId id)
         {
-            ProducePeer(name).Endorce();
-            OnEndorcedAgent(name);
+            ProducePeer(id).Endorce();
+            OnEndorcedAgent(id);
         }
 
         public void EndorceArtefact(Artefact artefact)
         {
-            if (artefact.OwnerName is null)
+            if (artefact.OwnerId == default)
                 throw new ArgumentException("Tried to endorce artefact without owner");
-            var owner = ProducePeer(artefact.OwnerName);
-            if (Account.KnowsArtefact(artefact.Name))
+            var owner = ProducePeer(artefact.OwnerId);
+            if (Account.KnowsArtefact(artefact.Id))
             {
-                artefact = Account.GetArtefact(artefact.Name);
-                if (owner.Name != artefact.OwnerName)
-                    throw new ArgumentException($"Tried to endorce artefact with invalid owner: {owner.Name}");
+                artefact = Account.GetArtefact(artefact.Id);
+                if (owner.Id != artefact.OwnerId)
+                    throw new ArgumentException($"Tried to endorce artefact with invalid owner: {owner.Id}");
             }
             else
                 Account.RememberArtefact(artefact);
-            Account.IncreaseTrust(owner.Name, ArtefactEndorcementTrustFactor);
+            Account.IncreaseTrust(owner.Id, ArtefactEndorcementTrustFactor);
             OnEndorcedArtefact(artefact);
         }
 
@@ -80,25 +80,31 @@ namespace Trustcoin.Core.Entities
         public void SyncAll()
         {
             Sync(
-                Account.Peers.Select(peer => peer.Name).ToArray(), 
-                Account.Artefacts.Select(a => a.Name).ToArray());
+                Account.Peers.Select(peer => peer.Id).ToArray(), 
+                Account.Artefacts.Select(a => a.Id).ToArray());
         }
 
         public Artefact CreateArtefact(string name)
         {
-            var artefact = new Artefact(name, Account.Name);
+            var artefact = Account.CreateArtefact(name);
             OnCreatedArtefact(artefact);
             return artefact;
         }
 
-        public void DestroyArtefact(string name)
+        public void CounterfeitArtefact(Artefact artefact)
         {
-            if (!Account.KnowsArtefact(name) || Account.GetArtefact(name).OwnerName != Account.Name)
-                throw new ArgumentException("Tried to destroy artefact not owned");
-            OnDestroyArtefact(Account.GetArtefact(name));
+            var counterfeit = new Artefact(artefact, Account.Id);
+            OnCreatedArtefact(counterfeit);
         }
 
-        public string StartTransaction(string clientName, params Transfer[] transfers)
+        public void DestroyArtefact(ArtefactId id)
+        {
+            if (!Account.KnowsArtefact(id) || Account.GetArtefact(id).OwnerId != Account.Id)
+                throw new ArgumentException("Tried to destroy artefact not owned");
+            OnDestroyArtefact(Account.GetArtefact(id));
+        }
+
+        public string StartTransaction(AgentId clientId, params Transfer[] transfers)
         {
             var transactionKey = _transactionFactory.CreateTransactionKey();
             var transaction = new Transaction
@@ -107,11 +113,11 @@ namespace Trustcoin.Core.Entities
                 Transfers = transfers
             };
             Account.AddPendingTransaction(transaction);
-            SendTransaction(ProducePeer(clientName), transaction);
+            SendTransaction(ProducePeer(clientId), transaction);
             return transactionKey;
         }
 
-        public string StartTransaction(string clientName, Money money)
+        public string StartTransaction(AgentId clientId, Money money)
         {
             var transactionKey = _transactionFactory.CreateTransactionKey();
             var transaction = new Transaction
@@ -122,15 +128,15 @@ namespace Trustcoin.Core.Entities
                     new Transfer
                     {
                         Money = money,
-                        ReceiverName = clientName,
-                        GiverName = Account.Name
+                        ReceiverId = clientId,
+                        GiverId = Account.Id
                     }
                 }
             };
             if (!Verify(transaction))
                 return null;
             Account.AddPendingTransaction(transaction);
-            SendTransaction(ProducePeer(clientName), transaction);
+            SendTransaction(ProducePeer(clientId), transaction);
             return transactionKey;
         }
 
@@ -162,17 +168,17 @@ namespace Trustcoin.Core.Entities
 
         private void SyncPeer(IPeer peer)
         {
-            Sync(new[] { peer.Name }, new string[0]);
+            Sync(new[] { peer.Id }, new ArtefactId[0]);
         }
 
-        private void Sync(string[] peersToUpdate, string[] artefactsToUpdate)
+        private void Sync(AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
         {
             var peerUpdates = GetPeerUpdates(peersToUpdate, artefactsToUpdate);
             SyncMoney(peerUpdates);
             SyncArtefacts(peerUpdates);
         }
 
-        private IDictionary<IPeer, Update> GetPeerUpdates(string[] peersToUpdate, string[] artefactsToUpdate)
+        private IDictionary<IPeer, Update> GetPeerUpdates(AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
             => TrustedPeers
                 .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
 
@@ -199,12 +205,12 @@ namespace Trustcoin.Core.Entities
         private void SyncArtefacts(IDictionary<IPeer, Update> peerUpdates)
         {
             var artefactAssessments = peerUpdates
-                .SelectMany(x => x.Value.ArtefactOwners.Select(
-                    y => (target: x.Key, subject: y.Key, owner: y.Value)))
-                .GroupBy(iu => iu.subject)
+                .SelectMany(x => x.Value.Artefacts.Select(
+                    y => (target: x.Key, subject: y)))
+                .GroupBy(iu => iu.subject.Id)
                 .ToDictionary(
-                g => Account.ProduceArtefact(g.Key),
-                g => g.Select(x => (x.target, x.owner)).ToArray());
+                g => Account.ProduceArtefact(g.First().subject),
+                g => g.Select(x => (x.target, x.subject.OwnerId)).ToArray());
             foreach (var kvp in artefactAssessments)
                 SyncArtefact(kvp.Key, kvp.Value);
         }
@@ -216,13 +222,13 @@ namespace Trustcoin.Core.Entities
             subject.Money = ComputeMoney(totalTrust, subject, assessments);
         }
 
-        private void SyncArtefact(Artefact subject, (IPeer target, string owner)[] assessments)
+        private void SyncArtefact(Artefact subject, (IPeer target, AgentId owner)[] assessments)
         {
-            var newOwnerName = ComputeOwner(subject, assessments);
-            if (newOwnerName != subject.OwnerName)
-                Account.MoveArtefact(subject, newOwnerName);
+            var newOwnerId = ComputeOwner(subject.OwnerId, assessments);
+            if (newOwnerId != subject.OwnerId)
+                Account.MoveArtefact(subject, newOwnerId);
             assessments
-                .Where(a => a.owner != newOwnerName)
+                .Where(a => a.owner != newOwnerId)
                 .Select(a => a.target)
                 .Except(new[] { Account.Self})
                 .ToList()
@@ -237,12 +243,12 @@ namespace Trustcoin.Core.Entities
             return weightedMeanAssessment;
         }
 
-        private string ComputeOwner(Artefact subject, (IPeer target, string owner)[] assessments)
+        private AgentId ComputeOwner(AgentId currentOwner, (IPeer target, AgentId owner)[] assessments)
         {
             var sumOfTrusts = assessments.Sum(a => a.target.Trust);
             var halfTrust = sumOfTrusts / 2;
             var accumulatedTrust = 0f;
-            return assessments.OrderBy(a => a.owner == subject.OwnerName)
+            return assessments.OrderBy(a => a.owner == currentOwner)
                 .SkipWhile(a => (accumulatedTrust += a.target.Trust) <= halfTrust)
                 .First().owner;
         }
@@ -250,19 +256,18 @@ namespace Trustcoin.Core.Entities
         private Money ComputeMeanAssessment((IPeer target, Money money)[] assessments)
             => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
-        private Update GetUpdatesFromPeer(IPeer peer, string[] peersToUpdate, string[] artefactsToUpdate)
+        private Update GetUpdatesFromPeer(IPeer peer, AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
             => _network.RequestUpdate(
-                peer.Name,
-                peer.Relations.Select(r => r.Agent.Name).Intersect(peersToUpdate).ToArray(),
+                peer.Id,
+                peer.Relations.Select(r => r.Agent.Id).Intersect(peersToUpdate).ToArray(),
                 artefactsToUpdate);
 
         private bool? GetVerificationFromPeer(IPeer peer, Transaction transaction)
-            => _network.RequestVerification(
-                peer.Name, transaction);
+            => _network.RequestVerification(peer.Id, transaction);
 
-        private void OnAddedConnection(string agentName)
+        private void OnAddedConnection(AgentId id)
         {
-            SendAction(new ConnectAction(agentName));
+            SendAction(new ConnectAction(id));
         }
 
         private void OnRenewedKey(byte[] oldKey, byte[] newKey)
@@ -270,9 +275,9 @@ namespace Trustcoin.Core.Entities
             SendAction(new RenewKeyAction(oldKey, newKey));
         }
 
-        private void OnEndorcedAgent(string agentName)
+        private void OnEndorcedAgent(AgentId agentId)
         {
-            SendAction(new EndorceAction(agentName));
+            SendAction(new EndorceAction(agentId));
         }
 
         private void OnCreatedArtefact(Artefact artefact)
@@ -304,14 +309,14 @@ namespace Trustcoin.Core.Entities
         {
             var signedAction = Account.Sign(action);
             foreach (var peer in Account.Peers)
-                _network.SendAction(peer.Name, Account.Name, signedAction);
+                _network.SendAction(peer.Id, Account.Id, signedAction);
         }
 
         private void SendTransaction(IPeer peer, Transaction transaction)
         {
             var action = new StartTransationAction(transaction);
             var signedAction = Account.Sign(action);
-            _network.SendAction(peer.Name, Account.Name, signedAction);
+            _network.SendAction(peer.Id, Account.Id, signedAction);
         }
     }
 }

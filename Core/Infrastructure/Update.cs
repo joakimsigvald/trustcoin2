@@ -9,14 +9,11 @@ namespace Trustcoin.Core.Infrastructure
     {
         public Update(IEnumerable<IPeer> peers, IEnumerable<Artefact> artefacts)
         {
-            PeerMoney = peers.ToDictionary(p => p.Name, p => p.Money);
-            ArtefactOwners = artefacts
-                .Concat(peers.SelectMany(pu => pu.OwnedArtefacts))
-                .Distinct()
-                .ToDictionary(p => p.Name, p => p.OwnerName);
+            PeerMoney = peers.ToDictionary(p => p.Id, p => p.Money);
+            Artefacts = artefacts.ToArray();
         }
 
-        public IDictionary<string, Money> PeerMoney { get; }
-        public IDictionary<string, string> ArtefactOwners { get; }
+        public IDictionary<AgentId, Money> PeerMoney { get; }
+        public Artefact[] Artefacts { get; }
     }
 }

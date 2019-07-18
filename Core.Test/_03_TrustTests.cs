@@ -9,15 +9,15 @@ namespace Trustcoin.Core.Test
         [Fact]
         public void AfterConnectedAgent_TrustIs_Zero()
         {
-            MyActor.Connect(OtherName);
-            Assert.Equal(0f, MyAccount.GetTrust(OtherName));
+            MyActor.Connect(OtherId);
+            Assert.Equal(0f, MyAccount.GetTrust(OtherId));
         }
 
         [Fact]
         public void TrustOfSelf_IsAlways_MaxTrust()
         {
-            MyAccount.SetTrust(MyName, (SignedWeight)0);
-            MyAccount.DecreaseTrust(MyName, (Weight)1);
+            MyAccount.SetTrust(MyId, (SignedWeight)0);
+            MyAccount.DecreaseTrust(MyId, (Weight)1);
             Assert.Equal(SignedWeight.Max, MyAccount.Self.Trust);
         }
 
@@ -28,9 +28,9 @@ namespace Trustcoin.Core.Test
         public void CanSetAndGetTrustOfPeer(float trustValue)
         {
             var trust = (SignedWeight)trustValue;
-            MyActor.Connect(OtherName);
-            MyAccount.SetTrust(OtherName, trust);
-            Assert.Equal(trust, MyAccount.GetTrust(OtherName));
+            MyActor.Connect(OtherId);
+            MyAccount.SetTrust(OtherId, trust);
+            Assert.Equal(trust, MyAccount.GetTrust(OtherId));
         }
 
         [Theory]
@@ -38,8 +38,8 @@ namespace Trustcoin.Core.Test
         [InlineData(1.001)]
         public void WhenSetTrustOutOfBounds_ThrowsOutOfBoundsException(float trust)
         {
-            MyActor.Connect(OtherName);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherName, (SignedWeight)trust));
+            MyActor.Connect(OtherId);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetTrust(OtherId, (SignedWeight)trust));
         }
 
         [Theory]
@@ -50,10 +50,10 @@ namespace Trustcoin.Core.Test
         [InlineData(-1, 1, -0.5)]
         public void CanIncreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
-            MyActor.Connect(OtherName);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustBefore);
-            MyAccount.IncreaseTrust(OtherName, (Weight)factor);
-            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherName));
+            MyActor.Connect(OtherId);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustBefore);
+            MyAccount.IncreaseTrust(OtherId, (Weight)factor);
+            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherId));
         }
 
         [Theory]
@@ -64,12 +64,12 @@ namespace Trustcoin.Core.Test
         [InlineData(-1, 1, -1)]
         public void CanDecreaseTrustWithFactor(float trustBefore, float factor, float trustAfter)
         {
-            MyActor.Connect(OtherName);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustBefore);
+            MyActor.Connect(OtherId);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustBefore);
 
-            MyAccount.DecreaseTrust(OtherName, (Weight)factor);
+            MyAccount.DecreaseTrust(OtherId, (Weight)factor);
 
-            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherName), 6);
+            Assert.Equal((SignedWeight)trustAfter, MyAccount.GetTrust(OtherId), 6);
         }
 
         [Theory]
@@ -80,9 +80,9 @@ namespace Trustcoin.Core.Test
         public void WhenIncreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
-            MyActor.Connect(OtherName);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustBefore);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherName, (Weight)factor));
+            MyActor.Connect(OtherId);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustBefore);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.IncreaseTrust(OtherId, (Weight)factor));
         }
 
         [Theory]
@@ -93,9 +93,9 @@ namespace Trustcoin.Core.Test
         public void WhenDecreaseTrustWithFactor_OutOfBounds_ThrowsOutOfBoundsException(
             float trustBefore, float factor)
         {
-            MyActor.Connect(OtherName);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustBefore);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherName, (Weight)factor));
+            MyActor.Connect(OtherId);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustBefore);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.DecreaseTrust(OtherId, (Weight)factor));
         }
     }
 }

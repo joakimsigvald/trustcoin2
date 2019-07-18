@@ -7,10 +7,10 @@ namespace Trustcoin.Core.Test
     public class MoneyTests : TestBase
     {
         [Fact]
-        public void NewPeerHas_0_Coins()
+        public void NewPeerHasNoMoney()
         {
-            MyActor.Connect(OtherName);
-            Assert.Equal((Money)0, MyAccount.GetPeer(OtherName).Money);
+            MyActor.Connect(OtherId);
+            Assert.Equal((Money)0, MyAccount.GetPeer(OtherId).Money);
         }
 
         [Theory]
@@ -20,21 +20,19 @@ namespace Trustcoin.Core.Test
         [InlineData(2, 3, 3)]
         public void AfterSetMoney_PeerHasMoney(float initialMoney, float setMoney, float hasMoney)
         {
-            MyActor.Connect(OtherName);
-            MyAccount.SetMoney(OtherName, (Money)initialMoney);
+            MyActor.Connect(OtherId);
+            MyAccount.SetMoney(OtherId, (Money)initialMoney);
 
-            MyAccount.SetMoney(OtherName, (Money)setMoney);
+            MyAccount.SetMoney(OtherId, (Money)setMoney);
 
-            Assert.Equal(hasMoney, MyAccount.GetMoney(OtherName));
+            Assert.Equal(hasMoney, MyAccount.GetMoney(OtherId));
         }
 
-        [Theory]
-        [InlineData(-1)]
-        [InlineData(-0.00001)]
-        public void WhenSetNegativeMoney_ThrowsOutOfBounds(float setMoney)
+        [Fact]
+        public void WhenSetNegativeMoney_ThrowsOutOfBounds()
         {
-            MyActor.Connect(OtherName);
-            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetMoney(OtherName, (Money)setMoney));
+            MyActor.Connect(OtherId);
+            Assert.Throws<OutOfBounds<float>>(() => MyAccount.SetMoney(OtherId, (Money)(-0.00001f)));
         }
 
         [Theory]
@@ -47,15 +45,15 @@ namespace Trustcoin.Core.Test
         public void AfterOnePeerEndorceAnotherPeer_EndorcedPeerIncreaseMoney(
             float trustForEndorcingPeer,
             float relationOfEndorcingPeerToEndorcedPeer,
-            float expectedIncrease)
+            float expectedMoney)
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustForEndorcingPeer);
-            MyAccount.SetRelationWeight(OtherName, ThirdName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustForEndorcingPeer);
+            MyAccount.SetRelationWeight(OtherId, ThirdId, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherActor.Endorce(ThirdName);
+            OtherActor.Endorce(ThirdId);
 
-            Assert.Equal(expectedIncrease, MyAccount.GetMoney(ThirdName));
+            Assert.Equal(expectedMoney, MyAccount.GetMoney(ThirdId));
         }
 
         [Theory]
@@ -68,24 +66,24 @@ namespace Trustcoin.Core.Test
         public void AfterPeerEndorcedMe_MyMoneyIncrease(
             float trustForEndorcingPeer,
             float relationOfEndorcingPeerToEndorcedPeer,
-            float expectedIncrease)
+            float expectedMoney)
         {
             Interconnect(MyActor, OtherActor);
-            MyAccount.SetTrust(OtherName, (SignedWeight)trustForEndorcingPeer);
-            MyAccount.SetRelationWeight(OtherName, MyName, (Weight)relationOfEndorcingPeerToEndorcedPeer);
+            MyAccount.SetTrust(OtherId, (SignedWeight)trustForEndorcingPeer);
+            MyAccount.SetRelationWeight(OtherId, MyId, (Weight)relationOfEndorcingPeerToEndorcedPeer);
 
-            OtherActor.Endorce(MyName);
-            Assert.Equal(expectedIncrease, MyAccount.Self.Money);
+            OtherActor.Endorce(MyId);
+            Assert.Equal(expectedMoney, MyAccount.Self.Money);
         }
 
         [Fact]
         public void WhenEndorcePeerManyTimes_MoneyIncreaseLessThanTwo()
         {
             Interconnect(MyActor, OtherActor, ThirdActor);
-            MyAccount.SetTrust(OtherName, SignedWeight.Max);
-            for (int i = 0; i < 10; i++)
-                OtherActor.Endorce(ThirdName);
-            Assert.InRange((float)MyAccount.GetMoney(ThirdName), 0, 2);
+            MyAccount.SetTrust(OtherId, SignedWeight.Max);
+            for (int i = 0; i < 100; i++)
+                OtherActor.Endorce(ThirdId);
+            Assert.InRange(MyAccount.GetMoney(ThirdId), 1f, 2f);
         }
     }
 }

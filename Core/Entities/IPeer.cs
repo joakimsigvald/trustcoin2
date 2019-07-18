@@ -13,8 +13,8 @@ namespace Trustcoin.Core.Entities
         SignedWeight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);
         SignedWeight DecreaseTrust(Weight factor) => Trust = Trust.Decrease(factor);
         void AddArtefact(Artefact artefact);
-        bool HasArtefact(string artefactName);
-        Artefact GetArtefact(string artefactName);
+        bool HasArtefact(ArtefactId id);
+        Artefact GetArtefact(ArtefactId id);
         void RemoveArtefact(Artefact artefact);
         void IncreaseMoney(Money money);
         void DecreaseMoney(Money money);

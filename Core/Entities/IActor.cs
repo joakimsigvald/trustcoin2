@@ -6,17 +6,18 @@ namespace Trustcoin.Core.Entities
     {
         IAccount Account { get; }
         Artefact CreateArtefact(string name);
+        void CounterfeitArtefact(Artefact artefact);
         void SyncAll();
-        IPeer Connect(string name);
-        void Endorce(string name);
+        IPeer Connect(AgentId id);
+        void Endorce(AgentId id);
         void RenewKeys();
-        void DestroyArtefact(string artefactName);
+        void DestroyArtefact(ArtefactId artefactId);
         void EndorceArtefact(Artefact artefact);
-        string StartTransaction(string clientName, params Transfer[] transfers);
-        string StartTransaction(string clientName, Money money);
+        string StartTransaction(AgentId clientId, params Transfer[] transfers);
+        string StartTransaction(AgentId clientId, Money money);
         bool AcceptTransaction(string transactionKey);
-        IPeer ProducePeer(string name);
+        IPeer ProducePeer(AgentId id);
         void RelayTransactionAccepted(Transaction transaction);
-        IAccount CreateAccount(string firstName);
+        IAccount CreateAccount(string name);
     }
 }
