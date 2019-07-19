@@ -49,6 +49,6 @@ namespace Trustcoin.Core.Entities
         void AddReceivedTransaction(string key);
         void IncreaseMoney(AgentId id, Money money);
         void DecreaseMoney(AgentId id, Money money);
-        Artefact CreateArtefact(string name);
+        Artefact CreateArtefact(string name, bool isResilient);
     }
 }

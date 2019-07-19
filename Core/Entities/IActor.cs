@@ -5,7 +5,7 @@ namespace Trustcoin.Core.Entities
     public interface IActor
     {
         IAccount Account { get; }
-        Artefact CreateArtefact(string name);
+        Artefact CreateArtefact(string name, bool isResilient = false);
         void CounterfeitArtefact(Artefact artefact);
         void SyncAll();
         IPeer Connect(AgentId id);

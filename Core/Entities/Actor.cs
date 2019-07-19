@@ -84,9 +84,9 @@ namespace Trustcoin.Core.Entities
                 Account.Artefacts.Select(a => a.Id).ToArray());
         }
 
-        public Artefact CreateArtefact(string name)
+        public Artefact CreateArtefact(string name, bool isResilient = false)
         {
-            var artefact = Account.CreateArtefact(name);
+            var artefact = Account.CreateArtefact(name, isResilient);
             OnCreatedArtefact(artefact);
             return artefact;
         }

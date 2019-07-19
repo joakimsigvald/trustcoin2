@@ -11,7 +11,8 @@ namespace Trustcoin.Core.Entities
     public class Account : IAccount
     {
         private byte _createdAccountCount = 0;
-        private uint _createdArtefactCount = 0;
+        public uint _resilientArtefactCount = 0;
+        public uint _transientArtefactCount = 0;
         private readonly IDictionary<AgentId, IPeer> _peers = new Dictionary<AgentId, IPeer>();
         private readonly IDictionary<string, Transaction> _pendingTransactions = new Dictionary<string, Transaction>();
         private readonly IDictionary<ArtefactId, Artefact> _knownArtefacts = new Dictionary<ArtefactId, Artefact>();
@@ -58,8 +59,16 @@ namespace Trustcoin.Core.Entities
             ? knownArtefact
             : new Artefact(artefact, default);
 
-        public Artefact CreateArtefact(string name)
-            => new Artefact(Id / ++_createdArtefactCount, name, Id);
+        public Artefact CreateArtefact(string name, bool isResilient)
+            => new Artefact(Id / (isResilient ? NextResilientNumber: NextTransientNumber), name, Id);
+
+        private uint NextTransientNumber
+            => _transientArtefactCount = (_transientArtefactCount + 1) % int.MaxValue;
+
+        private uint NextResilientNumber
+            => _resilientArtefactCount < int.MaxValue 
+            ? int.MaxValue + ++_resilientArtefactCount 
+            : throw new OutOfBounds<uint>(uint.MaxValue);
 
         public Artefact GetArtefact(ArtefactId id)
             => _knownArtefacts[id];
