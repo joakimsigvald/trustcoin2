@@ -8,6 +8,7 @@ namespace Trustcoin.Core.Entities
     public interface IAccount
     {
         IEnumerable<IPeer> Peers { get; }
+        IEnumerable<IPeer> OtherPeers { get; }
         ICollection<Artefact> Artefacts { get; }
         string Name { get; }
         IPeer Self { get; }

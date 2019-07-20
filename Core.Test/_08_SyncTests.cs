@@ -229,7 +229,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void WhenSyncWithAgentThatMyPeersDontKnow_TheyAskClosestTrustedPeer()
+        public void WhenSyncWithAgentThatMyPeersDontKnow_TheyAskNearestFriends()
         {
             var fullTrust = SignedWeight.Max;
 
@@ -242,7 +242,6 @@ namespace Trustcoin.Core.Test
 
             Interconnect(fullTrust, a, b, c);
             Interconnect(fullTrust, d, e, f);
-            Interconnect(fullTrust, a, b, c);
             Interconnect(fullTrust, b, f);
             Interconnect(fullTrust, c, e);
 
@@ -253,6 +252,64 @@ namespace Trustcoin.Core.Test
             Interconnect(fullTrust, a, d);
 
             Assert.Equal(SomeMoney, d.Account.GetMoney(a.Account.Id));
+        }
+
+        [Fact]
+        public void WhenSyncWithAgentThatMyPeersDontKnow_TheyAskNearestFriend_Cascading()
+        {
+            var fullTrust = SignedWeight.Max;
+
+            var a = _network.CreateActor(_network.CreateRootAccount("a", 11));
+            var b = _network.CreateActor(_network.CreateRootAccount("b", 12));
+            var c = _network.CreateActor(_network.CreateRootAccount("c", 13));
+            var d = _network.CreateActor(_network.CreateRootAccount("d", 14));
+            var e = _network.CreateActor(_network.CreateRootAccount("e", 15));
+            var f = _network.CreateActor(_network.CreateRootAccount("f", 16));
+            var g = _network.CreateActor(c.CreateAccount("g"));
+
+            Interconnect(fullTrust, a, b, c);
+            Interconnect(fullTrust, d, e, f);
+            Interconnect(fullTrust, b, f);
+            Interconnect(fullTrust, c, g);
+            Interconnect(fullTrust, g, e);
+
+            a.Account.SetMoney(a.Account.Id, SomeMoney);
+            b.Account.SetMoney(a.Account.Id, SomeMoney);
+            c.Account.SetMoney(a.Account.Id, SomeMoney);
+
+            Interconnect(fullTrust, a, d);
+
+            Assert.Equal(SomeMoney, d.Account.GetMoney(a.Account.Id));
+        }
+
+        [Fact]
+        public void WhenSyncWithAgentThatMyPeersDontKnow_TheyAskNearestFriends_Cascading()
+        {
+            var fullTrust = SignedWeight.Max;
+
+            var a = _network.CreateActor(_network.CreateRootAccount("a", 11));
+            var b = _network.CreateActor(_network.CreateRootAccount("b", 12));
+            var c = _network.CreateActor(_network.CreateRootAccount("c", 13));
+            var d = _network.CreateActor(_network.CreateRootAccount("d", 14));
+            var e = _network.CreateActor(_network.CreateRootAccount("e", 15));
+            var f = _network.CreateActor(_network.CreateRootAccount("f", 16));
+            var g = _network.CreateActor(c.CreateAccount("g"));
+            var h = _network.CreateActor(a.CreateAccount("h"));
+
+            Interconnect(fullTrust, a, b, c, h);
+            Interconnect(fullTrust, d, e, f);
+            Interconnect(fullTrust, b, f);
+            Interconnect(fullTrust, c, g, h);
+            Interconnect(fullTrust, e, g);
+
+            a.Account.SetMoney(a.Account.Id, SomeMoney);
+            b.Account.SetMoney(a.Account.Id, SomeMoney);
+            c.Account.SetMoney(a.Account.Id, 0.8f * SomeMoney);
+            h.Account.SetMoney(a.Account.Id, 0.4f * SomeMoney);
+
+            Interconnect(fullTrust, a, d);
+
+            Assert.Equal(0.8f * SomeMoney, d.Account.GetMoney(a.Account.Id), 5);
         }
     }
 }

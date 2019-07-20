@@ -15,5 +15,8 @@ namespace Trustcoin.Core.Entities
 
         public const float ArtefactMoneyFactor = 0.01f;
         public const float TransactionAcceptanceLimit = 3;
+
+        public const int SyncCascadeDepth = 2;
+        public const int SyncCascadeBreadth = 8;
     }
 }

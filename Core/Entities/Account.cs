@@ -43,7 +43,8 @@ namespace Trustcoin.Core.Entities
         public bool IsConnectedTo(AgentId id)
             => id == Id || _peers.ContainsKey(id);
 
-        public IEnumerable<IPeer> Peers => _peers.Values.Append(Self);
+        public IEnumerable<IPeer> OtherPeers => _peers.Values;
+        public IEnumerable<IPeer> Peers => OtherPeers.Append(Self);
 
         public IAccount CreateChild(string name)
         {

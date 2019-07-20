@@ -35,10 +35,10 @@ namespace Trustcoin.Core.Infrastructure
         public IAgent FindAgent(AgentId id)
             => _lookupService.Find(id);
 
-        public Update RequestUpdate(AgentId targetId, AgentId[] subjectIds, ArtefactId[] artefactIds, int cascadeCount = 0)
+        public Update RequestUpdate(AgentId asked, AgentId[] about, ArtefactId[] regarding, params AgentId[] asking)
         {
-            var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
-            return targetClient.RequestUpdate(subjectIds, artefactIds, cascadeCount);
+            var targetClient = _accounts[asked].GetClient(this, _transactionFactory);
+            return targetClient.RequestUpdate(about, regarding, asking);
         }
 
         public bool? RequestVerification(AgentId targetId, Transaction transaction)

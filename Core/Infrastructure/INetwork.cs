@@ -12,7 +12,7 @@ namespace Trustcoin.Core.Infrastructure
         IAgent FindAgent(AgentId id);
         ILookupService GetLookupService();
         bool SendAction(AgentId targetId, AgentId sourceId, SignedAction action);
-        Update RequestUpdate(AgentId targetName, AgentId[] subjectIds, ArtefactId[] artefactIds, int cascadeCount = 0);
+        Update RequestUpdate(AgentId asked, AgentId[] about, ArtefactId[] regarding, params AgentId[] asking);
         bool? RequestVerification(AgentId targetName, Transaction transaction);
     }
 }

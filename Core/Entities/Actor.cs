@@ -158,18 +158,40 @@ namespace Trustcoin.Core.Entities
             Account.ClosePendingTransaction(transaction.Key);
         }
 
-        public IHolder GetPeerAssessment(AgentId id, int cascadeCount = 0)
+        public IHolder GetPeerAssessment(AgentId id, params AgentId[] asking)
+            => Account.IsConnectedTo(id) ? Account.GetPeer(id)
+            : asking.Length <= SyncCascadeDepth ? RequestPeerAssessment(id, asking.Append(Account.Id).ToArray())
+            : null;
+
+        private IHolder RequestPeerAssessment(AgentId id, params AgentId[] asking)
         {
-            if (Account.IsConnectedTo(id))
-                return Account.GetPeer(id);
-            if (cascadeCount > 0)
-                return null;
-            var nearestFriend = Friends.OrderBy(f => f.Id - id).First();
-            var cascadingUpdate = _network.RequestUpdate(nearestFriend.Id, new[] { id }, Array.Empty<ArtefactId>(), cascadeCount + 1);
-            return cascadingUpdate.PeerMoney.ContainsKey(id)
-                ? new Holder { Id = id, Money = cascadingUpdate.PeerMoney[id] }
+            var money = RequestPeerAssessment(GetNearestFriends(id, asking).ToArray(), id, asking);
+            return money.HasValue
+                ? new Holder { Id = id, Money = money.Value }
                 : null;
         }
+
+        private IEnumerable<IPeer> GetNearestFriends(AgentId id, params AgentId[] asking)
+            => Friends.Where(f => !asking.Contains(f.Id)).OrderBy(f => f.Id - id).Take(SyncCascadeBreadth);
+
+        private Money? RequestPeerAssessment(IPeer[] asked, AgentId about, params AgentId[] asking)
+        {
+            if (!asked.Any())
+                return null;
+            var assessments = GetIndirectPeerAssessments(asked, about, asking);
+            return assessments.Any()
+                ? ComputeMeanAssessment(assessments)
+                : (Money?)null;
+        }
+
+        private (IPeer, Money)[] GetIndirectPeerAssessments(IPeer[] asked, AgentId about, params AgentId[] asking) 
+            => asked.Select(p => (peer: p, update: RequestPeerAssessment(p, about, asking)))
+            .Where(t => t.update.PeerMoney.ContainsKey(about))
+                .Select(t => (t.peer, t.update.PeerMoney[about]))
+            .ToArray();
+
+        private Update RequestPeerAssessment(IPeer asked, AgentId about, params AgentId[] asking)
+            => _network.RequestUpdate(asked.Id, new[] { about }, Array.Empty<ArtefactId>(), asking);
 
         private bool Verify(Transaction transaction)
         {
@@ -270,7 +292,7 @@ namespace Trustcoin.Core.Entities
             => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
         private Update GetUpdatesFromPeer(IPeer peer, AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
-            => _network.RequestUpdate(peer.Id, peersToUpdate, artefactsToUpdate);
+            => _network.RequestUpdate(peer.Id, peersToUpdate, artefactsToUpdate, Account.Id);
 
         private bool? GetVerificationFromPeer(IPeer peer, Transaction transaction)
             => _network.RequestVerification(peer.Id, transaction);
