@@ -18,17 +18,6 @@ namespace Trustcoin.Core.Test.Types
         }
 
         [Theory]
-        [InlineData(0)]
-        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 16)]
-        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4)]
-        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
-        public void WhenCreateWithInvalidParts_ThrowsArgumentException(byte rootId, params int[] parts)
-        {
-            var byteParts = ToBytes(parts);
-            Assert.Throws<ArgumentException>(() => byteParts.Aggregate(new AgentId(rootId), (id, p) => id + p));
-        }
-
-        [Theory]
         [InlineData("1.1"
             , 1, 1)]
         [InlineData("255.255"
@@ -64,6 +53,17 @@ namespace Trustcoin.Core.Test.Types
             var root = new AgentId(rootId);
             var descendant = ToBytes(parts).Aggregate(root, (id, p) => id + p);
             Assert.Equal(representation, descendant.ToString());
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 16)]
+        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4)]
+        [InlineData(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
+        public void WhenCreateWithInvalidParts_ThrowsArgumentException(byte rootId, params int[] parts)
+        {
+            var byteParts = ToBytes(parts);
+            Assert.Throws<ArgumentException>(() => byteParts.Aggregate(new AgentId(rootId), (id, p) => id + p));
         }
 
         [Theory]

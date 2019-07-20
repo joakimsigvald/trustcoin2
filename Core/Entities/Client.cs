@@ -18,11 +18,11 @@ namespace Trustcoin.Core.Entities
             _actor = actor;
         }
 
-        public Update RequestUpdate(AgentId[] subjectIds, ArtefactId[] artefactIds)
+        public Update RequestUpdate(AgentId[] subjectIds, ArtefactId[] artefactIds, int cascadeCount = 0)
         {
-            var requestedPeers = _actor.Account.Peers.Select(p => p.Id)
-                .Intersect(subjectIds)
-                .Select(_actor.Account.GetPeer);
+            var requestedPeers = subjectIds
+                .Select(id => _actor.GetPeerAssessment(id, cascadeCount))
+                .Where(pa => pa != null);
             var requestedArtefacts = _actor.Account.Artefacts.Select(p => p.Id)
                 .Intersect(artefactIds).Select(_actor.Account.GetArtefact);
             return new Update(requestedPeers, requestedArtefacts);

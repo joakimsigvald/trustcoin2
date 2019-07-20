@@ -23,6 +23,9 @@ namespace Trustcoin.Core.Infrastructure
             return account;
         }
 
+        public IActor CreateActor(IAccount account)
+            => new Actor(this, account, _transactionFactory);
+
         public void AddAccount(IAccount account)
         {
             _accounts[account.Id] = account;
@@ -32,10 +35,10 @@ namespace Trustcoin.Core.Infrastructure
         public IAgent FindAgent(AgentId id)
             => _lookupService.Find(id);
 
-        public Update RequestUpdate(AgentId targetId, AgentId[] subjectIds, ArtefactId[] artefactIds)
+        public Update RequestUpdate(AgentId targetId, AgentId[] subjectIds, ArtefactId[] artefactIds, int cascadeCount = 0)
         {
             var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
-            return targetClient.RequestUpdate(subjectIds, artefactIds);
+            return targetClient.RequestUpdate(subjectIds, artefactIds, cascadeCount);
         }
 
         public bool? RequestVerification(AgentId targetId, Transaction transaction)

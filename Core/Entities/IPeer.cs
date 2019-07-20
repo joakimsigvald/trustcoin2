@@ -3,11 +3,10 @@ using Trustcoin.Core.Types;
 
 namespace Trustcoin.Core.Entities
 {
-    public interface IPeer : IAgent
+    public interface IPeer : IAgent, IHolder
     {
         void Endorce();
         SignedWeight Trust { get; set; }
-        Money Money { get; set; }
         IEnumerable<Artefact> OwnedArtefacts { get; }
         Relation AsRelation() => new Relation(Clone());
         SignedWeight IncreaseTrust(Weight factor) => Trust = Trust.Increase(factor);

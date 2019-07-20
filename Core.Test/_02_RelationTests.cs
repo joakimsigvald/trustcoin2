@@ -74,7 +74,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void AfterICreatedChild_ChildIsConnectedToMe()
+        public void AfterICreatedChild_MeAndChildAreInterconnected()
         {
             const string childName = "child";
             Interconnect(MyActor, OtherActor);
@@ -82,10 +82,11 @@ namespace Trustcoin.Core.Test
             var newAccount = MyActor.CreateAccount(childName);
 
             Assert.True(newAccount.IsConnectedTo(MyId));
+            Assert.True(MyAccount.IsConnectedTo(newAccount.Id));
         }
 
         [Fact]
-        public void WhenPeerCreateChild_IConnectWithChild()
+        public void WhenMyPeerCreateChild_IConnectWithChild()
         {
             const string childName = "child";
             Interconnect(MyActor, OtherActor);

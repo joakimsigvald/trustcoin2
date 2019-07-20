@@ -227,5 +227,32 @@ namespace Trustcoin.Core.Test
 
             Assert.False(MyAccount.KnowsArtefact(artefact.Id));
         }
+
+        [Fact]
+        public void WhenSyncWithAgentThatMyPeersDontKnow_TheyAskClosestTrustedPeer()
+        {
+            var fullTrust = SignedWeight.Max;
+
+            var a = _network.CreateActor(_network.CreateRootAccount("a", 11));
+            var b = _network.CreateActor(_network.CreateRootAccount("b", 12));
+            var c = _network.CreateActor(_network.CreateRootAccount("c", 13));
+            var d = _network.CreateActor(_network.CreateRootAccount("d", 14));
+            var e = _network.CreateActor(_network.CreateRootAccount("e", 15));
+            var f = _network.CreateActor(_network.CreateRootAccount("f", 16));
+
+            Interconnect(fullTrust, a, b, c);
+            Interconnect(fullTrust, d, e, f);
+            Interconnect(fullTrust, a, b, c);
+            Interconnect(fullTrust, b, f);
+            Interconnect(fullTrust, c, e);
+
+            a.Account.SetMoney(a.Account.Id, SomeMoney);
+            b.Account.SetMoney(a.Account.Id, SomeMoney);
+            c.Account.SetMoney(a.Account.Id, SomeMoney);
+
+            Interconnect(fullTrust, a, d);
+
+            Assert.Equal(SomeMoney, d.Account.GetMoney(a.Account.Id));
+        }
     }
 }

@@ -19,5 +19,6 @@ namespace Trustcoin.Core.Entities
         IPeer ProducePeer(AgentId id);
         void RelayTransactionAccepted(Transaction transaction);
         IAccount CreateAccount(string name);
+        IHolder GetPeerAssessment(AgentId id, int cascadeCount = 0);
     }
 }

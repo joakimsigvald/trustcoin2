@@ -16,6 +16,8 @@ namespace Trustcoin.Core.Test
 
         protected ITransactionFactory _transactionFactory = new TransactionFactory();
 
+        protected static readonly Money SomeMoney = (Money)100;
+
         protected TestBase(ICryptographyFactory cryptographyFactory = null)
         {
             _network = new Network(cryptographyFactory ?? new SimpleCryptographyFactory());
@@ -32,6 +34,14 @@ namespace Trustcoin.Core.Test
         protected AgentId MyId => MyAccount.Id;
         protected AgentId OtherId => OtherAccount.Id;
         protected AgentId ThirdId => ThirdAccount.Id;
+
+        protected void Interconnect(SignedWeight initialTrust, params IActor[] actors)
+        {
+            Interconnect(actors);
+            foreach (var subject in actors)
+                foreach (var target in actors)
+                    subject.Account.SetTrust(target.Account.Id, initialTrust);
+        }
 
         protected void Interconnect(params IActor[] actors)
         {

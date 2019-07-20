@@ -40,7 +40,7 @@ namespace Trustcoin.Core.Entities
             var child = Account.CreateChild(name);
             _network.AddAccount(child);
             OnChildCreated(new NewAgent(child));
-            var actor = new Actor(_network, child, _transactionFactory);
+            var actor = _network.CreateActor(child);
             actor.Connect(Account.Id);
             return child;
         }
@@ -158,6 +158,19 @@ namespace Trustcoin.Core.Entities
             Account.ClosePendingTransaction(transaction.Key);
         }
 
+        public IHolder GetPeerAssessment(AgentId id, int cascadeCount = 0)
+        {
+            if (Account.IsConnectedTo(id))
+                return Account.GetPeer(id);
+            if (cascadeCount > 0)
+                return null;
+            var nearestFriend = Friends.OrderBy(f => f.Id - id).First();
+            var cascadingUpdate = _network.RequestUpdate(nearestFriend.Id, new[] { id }, Array.Empty<ArtefactId>(), cascadeCount + 1);
+            return cascadingUpdate.PeerMoney.ContainsKey(id)
+                ? new Holder { Id = id, Money = cascadingUpdate.PeerMoney[id] }
+                : null;
+        }
+
         private bool Verify(Transaction transaction)
         {
             var peerVerifications = GetPeerVerifications(transaction);
@@ -179,11 +192,11 @@ namespace Trustcoin.Core.Entities
         }
 
         private IDictionary<IPeer, Update> GetPeerUpdates(AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
-            => TrustedPeers
+            => Friends
                 .ToDictionary(peer => peer, peer => GetUpdatesFromPeer(peer, peersToUpdate, artefactsToUpdate));
 
         private IList<(IPeer peer, bool verification)> GetPeerVerifications(Transaction transaction)
-            => TrustedPeers
+            => Friends
             .Select(peer => (peer, verification: GetVerificationFromPeer(peer, transaction)))
             .Where(pv => pv.verification.HasValue)
             .Select(pv => (pv.peer, verification: pv.verification.Value))
@@ -215,7 +228,7 @@ namespace Trustcoin.Core.Entities
                 SyncArtefact(kvp.Key, kvp.Value);
         }
 
-        private IEnumerable<IPeer> TrustedPeers => Account.Peers.Where(p => p.Trust > 0);
+        private IEnumerable<IPeer> Friends => Account.Peers.Where(p => p.Trust > 0);
 
         private void SyncMoney(float totalTrust, IPeer subject, (IPeer target, Money assessment)[] assessments)
         {
@@ -257,10 +270,7 @@ namespace Trustcoin.Core.Entities
             => (Money)assessments.Select(a => ((float)a.target.Trust, (float)a.money)).WeightedMean();
 
         private Update GetUpdatesFromPeer(IPeer peer, AgentId[] peersToUpdate, ArtefactId[] artefactsToUpdate)
-            => _network.RequestUpdate(
-                peer.Id,
-                peer.Relations.Select(r => r.Agent.Id).Intersect(peersToUpdate).ToArray(),
-                artefactsToUpdate);
+            => _network.RequestUpdate(peer.Id, peersToUpdate, artefactsToUpdate);
 
         private bool? GetVerificationFromPeer(IPeer peer, Transaction transaction)
             => _network.RequestVerification(peer.Id, transaction);
