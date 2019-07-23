@@ -8,6 +8,5 @@ namespace Trustcoin.Core.Entities
     {
         bool Update(AgentId subjectId, SignedAction action);
         Update RequestUpdate(AgentId[] subjectIds, ArtefactId[] artefactIds, params AgentId[] asking);
-        bool? Verify(Transaction transaction);
     }
 }

@@ -41,12 +41,6 @@ namespace Trustcoin.Core.Infrastructure
             return targetClient.RequestUpdate(about, regarding, asking);
         }
 
-        public bool? RequestVerification(AgentId targetId, Transaction transaction)
-        {
-            var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);
-            return targetClient.Verify(transaction);
-        }
-
         public bool SendAction(AgentId targetId, AgentId subjectId, SignedAction action)
         {
             var targetClient = _accounts[targetId].GetClient(this, _transactionFactory);

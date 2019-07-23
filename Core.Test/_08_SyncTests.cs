@@ -215,7 +215,7 @@ namespace Trustcoin.Core.Test
         }
 
         [Fact]
-        public void WhenSync_UnknownArtefactsAreNotSynched()
+        public void WhenSync_LearnAboutUnknownArtefactsPossessedByPeers()
         {
             Interconnect(OtherActor, ThirdActor);
             var artefact = ThirdActor.CreateArtefact(Artefact.Name);
@@ -225,7 +225,7 @@ namespace Trustcoin.Core.Test
 
             MyActor.SyncAll();
 
-            Assert.False(MyAccount.KnowsArtefact(artefact.Id));
+            Assert.True(MyAccount.KnowsArtefact(artefact.Id));
         }
 
         [Fact]

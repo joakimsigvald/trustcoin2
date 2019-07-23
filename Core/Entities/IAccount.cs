@@ -33,7 +33,6 @@ namespace Trustcoin.Core.Entities
         bool KnowsArtefact(ArtefactId id);
         void RememberArtefact(Artefact artefact);
         IAccount CreateChild(string name);
-        void RemoveArtefact(Artefact artefact);
         void AddArtefact(Artefact artefact, AgentId ownerId);
         void MoveArtefact(Artefact artefact, AgentId ownerId);
         SignedAction Sign(IAction action);

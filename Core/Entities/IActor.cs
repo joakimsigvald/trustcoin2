@@ -14,8 +14,8 @@ namespace Trustcoin.Core.Entities
         void DestroyArtefact(ArtefactId artefactId);
         void EndorceArtefact(Artefact artefact);
         string StartTransaction(AgentId clientId, params Transfer[] transfers);
-        string StartTransaction(AgentId clientId, Money money);
         bool AcceptTransaction(string transactionKey);
+        bool VerifyTransaction(Transaction transaction);
         IPeer ProducePeer(AgentId id);
         void RelayTransactionAccepted(Transaction transaction);
         IAccount CreateAccount(string name);

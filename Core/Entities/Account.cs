@@ -76,7 +76,13 @@ namespace Trustcoin.Core.Entities
 
         public void ForgetArtefact(ArtefactId id)
         {
+            if (!KnowsArtefact(id))
+                return;
+            var artefact = GetArtefact(id);
             _knownArtefacts.Remove(id);
+            if (artefact.OwnerId == default || !IsConnectedTo(artefact.OwnerId))
+                return;
+            GetPeer(artefact.OwnerId).RemoveArtefact(id);
         }
 
         public IPeer GetPeer(AgentId id)
@@ -92,7 +98,7 @@ namespace Trustcoin.Core.Entities
         public SignedWeight DecreaseTrust(AgentId id, Weight factor) 
             => id == Id ? SignedWeight.Max : GetPeer(id).DecreaseTrust(factor);
 
-        public Money GetMoney(AgentId id) => GetPeer(id).Money;
+        public Money GetMoney(AgentId id) => IsConnectedTo(id) ? GetPeer(id).Money : Money.Min;
         public void SetMoney(AgentId id, Money money) => GetPeer(id).Money = money;
         public void IncreaseMoney(AgentId id, Money money) 
             => GetPeer(id).IncreaseMoney(money);
@@ -158,15 +164,8 @@ namespace Trustcoin.Core.Entities
 
         public void MoveArtefact(Artefact artefact, AgentId ownerId)
         {
-            RemoveArtefact(artefact);
-            AddArtefact(artefact, ownerId);
-        }
-
-        public void RemoveArtefact(Artefact artefact)
-        {
             ForgetArtefact(artefact.Id);
-            if (IsConnectedTo(artefact.OwnerId))
-                GetPeer(artefact.OwnerId).RemoveArtefact(artefact);
+            AddArtefact(artefact, ownerId);
         }
 
         public void AddArtefact(Artefact artefact, AgentId ownerId)

@@ -13,6 +13,5 @@ namespace Trustcoin.Core.Infrastructure
         ILookupService GetLookupService();
         bool SendAction(AgentId targetId, AgentId sourceId, SignedAction action);
         Update RequestUpdate(AgentId asked, AgentId[] about, ArtefactId[] regarding, params AgentId[] asking);
-        bool? RequestVerification(AgentId targetName, Transaction transaction);
     }
 }

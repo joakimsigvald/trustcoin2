@@ -14,7 +14,7 @@ namespace Trustcoin.Core.Entities
         void AddArtefact(Artefact artefact);
         bool HasArtefact(ArtefactId id);
         Artefact GetArtefact(ArtefactId id);
-        void RemoveArtefact(Artefact artefact);
+        void RemoveArtefact(ArtefactId id);
         void IncreaseMoney(Money money);
         void DecreaseMoney(Money money);
     }

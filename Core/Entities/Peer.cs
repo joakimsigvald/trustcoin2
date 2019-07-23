@@ -33,9 +33,9 @@ namespace Trustcoin.Core.Entities
             _artefacts.Add(artefact.Id, artefact);
         }
 
-        public void RemoveArtefact(Artefact artefact)
+        public void RemoveArtefact(ArtefactId id)
         {
-            _artefacts.Remove(artefact.Id);
+            _artefacts.Remove(id);
         }
 
         public bool HasArtefact(ArtefactId id)

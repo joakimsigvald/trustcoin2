@@ -23,8 +23,12 @@ namespace Trustcoin.Core.Entities
             var requestedPeers = subjectIds
                 .Select(id => _actor.GetPeerAssessment(id, asking))
                 .Where(pa => pa != null);
-            var requestedArtefacts = _actor.Account.Artefacts.Select(p => p.Id)
-                .Intersect(artefactIds).Select(_actor.Account.GetArtefact);
+            var requestedArtefacts = _actor.Account.Artefacts
+                .Select(p => p.Id)
+                .Intersect(artefactIds)
+                .Concat(_actor.Account.Self.OwnedArtefacts.Select(art => art.Id))
+                .Distinct()
+                .Select(_actor.Account.GetArtefact);
             return new Update(requestedPeers, requestedArtefacts);
         }
 
@@ -131,7 +135,7 @@ namespace Trustcoin.Core.Entities
         private void WhenDestroyArtefact(IPeer peer, ArtefactAction action)
         {
             if (peer.HasArtefact(action.Model.Id))
-                _actor.Account.RemoveArtefact(action.Model);
+                _actor.Account.ForgetArtefact(action.Model.Id);
             else
                 peer.DecreaseTrust(DestroyOthersArtefactDistrustFactor);
         }
@@ -148,7 +152,7 @@ namespace Trustcoin.Core.Entities
             if (_actor.Account.HasReceivedTransaction(action.Model.Key))
                 return;
             _actor.Account.AddReceivedTransaction(action.Model.Key);
-            if (Verify(action.Model) ?? true)
+            if (_actor.VerifyTransaction(action.Model))
                 AccountTransaction(action);
             else
                 RejectTransaction(action);
@@ -213,34 +217,5 @@ namespace Trustcoin.Core.Entities
         private Relation ProduceRelation(IPeer source, AgentId targetId)
             => source.GetRelation(targetId)
                 ?? source.AddRelation(_network.FindAgent(targetId));
-
-        public bool? Verify(Transaction transaction)
-            => AggregateVerifications(transaction.Transfers.Select(Verify).ToArray());
-
-        private bool? Verify(Transfer transfer)
-            => AggregateVerifications(Verify(transfer.Artefacts, transfer.GiverId), Verify(transfer.Money, transfer.GiverId));
-
-        private bool? Verify(Artefact[] artefacts, AgentId giverId)
-            => artefacts is null ? true
-            : artefacts.Any(a => a.OwnerId != giverId) ? false
-            : AggregateVerifications(artefacts.Select(Verify).ToArray());
-
-        private bool? Verify(Artefact artefact)
-            => !_actor.Account.KnowsArtefact(artefact.Id)
-                       ? (bool?)null
-                       : _actor.Account.GetArtefact(artefact.Id).OwnerId == artefact.OwnerId;
-
-        private bool? Verify(Money money, AgentId giverId)
-            => money == 0f ? true
-            : _actor.Account.IsConnectedTo(giverId)
-            ? _actor.Account.GetMoney(giverId) >= money
-            : (bool?)null;
-
-        private bool? AggregateVerifications(params bool?[] verifications)
-            => verifications.Any(v => v == false)
-            ? false
-            : verifications.Any(v => v is null)
-            ? (bool?)null
-            : true;
     }
 }
